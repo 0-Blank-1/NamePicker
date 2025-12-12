@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Name Picker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; background: #f4f4f9; color: #333; }
+        h1 { text-align: center; color: #2c3e50; }
+        .name-list { list-style: none; padding: 0; }
+        
+        /* The card for each name */
+        .name-item { 
+            background: white; 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .name-text { font-weight: bold; font-size: 1.1rem; }
+        
+        button { 
+            padding: 8px 16px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* Button Styles */
+        .btn-pick { background-color: #28a745; color: white; }
+        .btn-pick:hover { background-color: #218838; }
+        
+        .btn-taken { background-color: #e2e6ea; color: #6c757d; cursor: not-allowed; border: 1px solid #dae0e5;}
+        
+        .btn-yours { background-color: #007bff; color: white; }
+        .btn-yours:hover { background-color: #0056b3; }
+
+        .status { text-align: center; margin-bottom: 20px; padding: 10px; background: #e9ecef; border-radius: 5px; }
+        .loading { text-align: center; margin-top: 50px; font-size: 1.2rem; color: #555; }
+    </style>
+</head>
+<body>
+
+    <h1>Pick a Name</h1>
+    <div class="status" id="status-msg">Loading availability...</div>
+    <div id="loading" class="loading">Connecting to database...</div>
+    
+    <ul class="name-list" id="name-list">
+        </ul>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, runTransaction, set } 
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // =========================================================
+        // YOUR KEYS ARE NOW INSERTED HERE:
+        // =========================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUZujR22d-CoDfBlHkWKHcYCMcQrJeHog",
+            authDomain: "name-picker-af4cb.firebaseapp.com",
+            databaseURL: "https://name-picker-af4cb-default-rtdb.firebaseio.com",
+            projectId: "name-picker-af4cb",
+            storageBucket: "name-picker-af4cb.firebasestorage.app",
+            messagingSenderId: "756608255624",
+            appId: "1:756608255624:web:23252bfb157d5572ea013d",
+            measurementId: "G-YHZ5X524MV"
+        };
+        
+        // You can edit this list to change the names displayed
+        const NAMES_TO_CREATE = [
+            "Alex", "Ben", "Charlie", "David", "Eve", 
+            "Fiona", "George", "Hannah", "Ian", "Julia",
+            "Kevin", "Liam", "Mia", "Noah", "Olivia",
+            "Paul", "Quinn", "Rachel", "Sam", "Tina"
+        ];
+        // =========================================================
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const namesRef = ref(db, 'names');
+
+        // Identify the user (Simple browser-based ID)
+        let userId = localStorage.getItem("user_uuid");
+        if (!userId) {
+            userId = "user_" + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("user_uuid", userId);
+        }
+
+        const listEl = document.getElementById("name-list");
+        const loadingEl = document.getElementById("loading");
+        const statusEl = document.getElementById("status-msg");
+
+        // --- REAL-TIME LISTENER ---
+        onValue(namesRef, (snapshot) => {
+            loadingEl.style.display = "none";
+            const data = snapshot.val();
+
+            if (!data) {
+                setupInitialData();
+                return;
+            }
+            renderList(data);
+        });
+
+        // --- SETUP FUNCTION ---
+        function setupInitialData() {
+            const initialData = {};
+            NAMES_TO_CREATE.forEach((name, index) => {
+                initialData[`id_${index}`] = { name: name, takenBy: "" };
+            });
+            set(namesRef, initialData);
+        }
+
+        // --- RENDER FUNCTION ---
+        function renderList(data) {
+            listEl.innerHTML = ""; 
+            let mySelection = null;
+
+            Object.values(data).forEach(item => {
+                if (item.takenBy === userId) mySelection = item.name;
+            });
+
+            statusEl.textContent = mySelection 
+                ? `You have selected: ${mySelection}` 
+                : "Please select a name.";
+            statusEl.style.color = mySelection ? "green" : "#333";
+
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                const li = document.createElement("li");
+                li.className = "name-item";
+
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "name-text";
+                nameSpan.textContent = item.name;
+
+                const btn = document.createElement("button");
+
+                if (item.takenBy === userId) {
+                    btn.textContent = "Unselect";
+                    btn.className = "btn-yours";
+                    btn.onclick = () => toggleName(key, false);
+                } else if (item.takenBy !== "") {
+                    btn.textContent = "Taken";
+                    btn.className = "btn-taken";
+                    btn.disabled = true;
+                } else {
+                    btn.textContent = "Select";
+                    btn.className = "btn-pick";
+                    if (mySelection) {
+                        btn.disabled = true;
+                        btn.style.opacity = "0.5";
+                        btn.style.cursor = "default";
+                    } else {
+                        btn.onclick = () => toggleName(key, true);
+                    }
+                }
+
+                li.appendChild(nameSpan);
+                li.appendChild(btn);
+                listEl.appendChild(li);
+            });
+        }
+
+        // --- TRANSACTION LOGIC ---
+        function toggleName(key, claiming) {
+            const itemRef = ref(db, `names/${key}`);
+            runTransaction(itemRef, (currentData) => {
+                if (currentData === null) return currentData; 
+                if (claiming) {
+                    if (currentData.takenBy === "") {
+                        currentData.takenBy = userId;
+                        return currentData;
+                    } else {
+                        return; // Abort
+                    }
+                } else {
+                    if (currentData.takenBy === userId) {
+                        currentData.takenBy = "";
+                        return currentData;
+                    }
+                }
+            }).then(result => {
+                if (!result.committed && claiming) {
+                    alert("Sorry, that name was just taken by someone else!");
+                }
+            }).catch(console.error);
+        }
+    </script>
+</body>
+</html>
