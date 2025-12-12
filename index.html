@@ -3,57 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Name Picker</title>
+    <title>Random Name Picker</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; background: #f4f4f9; color: #333; }
-        h1 { text-align: center; color: #2c3e50; }
-        .name-list { list-style: none; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; background: #f4f4f9; color: #333; text-align: center;}
+        h1 { color: #2c3e50; }
         
-        /* The card for each name */
-        .name-item { 
+        .status-box {
             background: white; 
-            border: 1px solid #ddd; 
-            padding: 15px; 
-            margin-bottom: 10px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 2px solid #ddd; 
+            padding: 30px; 
+            margin: 20px auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-        
-        .name-text { font-weight: bold; font-size: 1.1rem; }
+
+        .name-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #007bff; /* Blue for assigned name */
+            margin: 10px 0;
+        }
+
+        .message {
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
         
         button { 
-            padding: 8px 16px; 
+            padding: 12px 25px; 
             border: none; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             cursor: pointer; 
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            transition: background-color 0.2s;
         }
 
-        /* Button Styles */
         .btn-pick { background-color: #28a745; color: white; }
         .btn-pick:hover { background-color: #218838; }
-        
-        .btn-taken { background-color: #e2e6ea; color: #6c757d; cursor: not-allowed; border: 1px solid #dae0e5;}
-        
-        .btn-yours { background-color: #007bff; color: white; }
-        .btn-yours:hover { background-color: #0056b3; }
+        .btn-pick:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        .status { text-align: center; margin-bottom: 20px; padding: 10px; background: #e9ecef; border-radius: 5px; }
-        .loading { text-align: center; margin-top: 50px; font-size: 1.2rem; color: #555; }
+        .btn-unselect { background-color: #dc3545; color: white; margin-top: 10px;}
+        .btn-unselect:hover { background-color: #c82333; }
+
+        .loading { font-size: 1.2rem; color: #555; }
     </style>
 </head>
 <body>
 
-    <h1>Pick a Name</h1>
-    <div class="status" id="status-msg">Loading availability...</div>
-    <div id="loading" class="loading">Connecting to database...</div>
+    <h1>Random Name Assignment</h1>
     
-    <ul class="name-list" id="name-list">
-        </ul>
+    <div class="status-box" id="status-box">
+        <div id="loading" class="loading">Connecting to database...</div>
+        </div>
+    
+    <p>Names remaining: <span id="remaining-count">...</span></p>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -61,7 +71,7 @@
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         // =========================================================
-        // YOUR KEYS ARE NOW INSERTED HERE:
+        // YOUR CONFIGURATION (Kept from your last message)
         // =========================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBUZujR22d-CoDfBlHkWKHcYCMcQrJeHog",
@@ -95,11 +105,11 @@
             localStorage.setItem("user_uuid", userId);
         }
 
-        const listEl = document.getElementById("name-list");
+        const statusBoxEl = document.getElementById("status-box");
         const loadingEl = document.getElementById("loading");
-        const statusEl = document.getElementById("status-msg");
+        const remainingCountEl = document.getElementById("remaining-count");
 
-        // --- REAL-TIME LISTENER ---
+        // --- REAL-TIME LISTENER (The primary function that runs) ---
         onValue(namesRef, (snapshot) => {
             loadingEl.style.display = "none";
             const data = snapshot.val();
@@ -108,10 +118,11 @@
                 setupInitialData();
                 return;
             }
-            renderList(data);
+            renderStatus(data);
         });
 
         // --- SETUP FUNCTION ---
+        // Only runs if the database is completely empty
         function setupInitialData() {
             const initialData = {};
             NAMES_TO_CREATE.forEach((name, index) => {
@@ -120,78 +131,103 @@
             set(namesRef, initialData);
         }
 
-        // --- RENDER FUNCTION ---
-        function renderList(data) {
-            listEl.innerHTML = ""; 
+        // --- RENDER FUNCTION (The user interface) ---
+        function renderStatus(data) {
+            statusBoxEl.innerHTML = ""; // Clear existing content
             let mySelection = null;
+            let myKey = null;
+            let availableNames = [];
 
-            Object.values(data).forEach(item => {
-                if (item.takenBy === userId) mySelection = item.name;
-            });
-
-            statusEl.textContent = mySelection 
-                ? `You have selected: ${mySelection}` 
-                : "Please select a name.";
-            statusEl.style.color = mySelection ? "green" : "#333";
-
+            // 1. Check current status
             Object.keys(data).forEach(key => {
                 const item = data[key];
-                const li = document.createElement("li");
-                li.className = "name-item";
-
-                const nameSpan = document.createElement("span");
-                nameSpan.className = "name-text";
-                nameSpan.textContent = item.name;
-
-                const btn = document.createElement("button");
-
                 if (item.takenBy === userId) {
-                    btn.textContent = "Unselect";
-                    btn.className = "btn-yours";
-                    btn.onclick = () => toggleName(key, false);
-                } else if (item.takenBy !== "") {
-                    btn.textContent = "Taken";
-                    btn.className = "btn-taken";
-                    btn.disabled = true;
-                } else {
-                    btn.textContent = "Select";
-                    btn.className = "btn-pick";
-                    if (mySelection) {
-                        btn.disabled = true;
-                        btn.style.opacity = "0.5";
-                        btn.style.cursor = "default";
-                    } else {
-                        btn.onclick = () => toggleName(key, true);
-                    }
+                    mySelection = item.name;
+                    myKey = key;
                 }
-
-                li.appendChild(nameSpan);
-                li.appendChild(btn);
-                listEl.appendChild(li);
+                if (item.takenBy === "") {
+                    availableNames.push(key);
+                }
             });
+
+            // Update remaining count
+            remainingCountEl.textContent = availableNames.length;
+
+            if (mySelection) {
+                // 2. User has a name
+                statusBoxEl.innerHTML = `
+                    <div class="message">Your assigned name is:</div>
+                    <div class="name-display">${mySelection}</div>
+                    <button id="unselect-btn" class="btn-unselect">Unselect Name</button>
+                `;
+                document.getElementById('unselect-btn').onclick = () => toggleName(myKey, false);
+
+            } else if (availableNames.length > 0) {
+                // 3. Names are available, and user needs to pick
+                statusBoxEl.innerHTML = `
+                    <div class="message">Click below to get a randomly assigned name.</div>
+                    <button id="pick-btn" class="btn-pick">Get My Name</button>
+                `;
+                document.getElementById('pick-btn').onclick = () => getRandomName(availableNames);
+                
+            } else {
+                // 4. No names left
+                statusBoxEl.innerHTML = `<div class="message" style="color:#dc3545;">All names have been taken!</div>`;
+            }
         }
 
-        // --- TRANSACTION LOGIC ---
+        // --- NEW RANDOM PICKING LOGIC ---
+        function getRandomName(availableKeys) {
+            if (availableKeys.length === 0) {
+                alert("No names are currently available.");
+                return;
+            }
+
+            // Pick a random index and get the corresponding key
+            const randomIndex = Math.floor(Math.random() * availableKeys.length);
+            const randomKey = availableKeys[randomIndex];
+
+            // Attempt to claim the name using a transaction
+            toggleName(randomKey, true);
+        }
+
+
+        // --- TRANSACTION LOGIC (Modified to support the new flow) ---
         function toggleName(key, claiming) {
             const itemRef = ref(db, `names/${key}`);
+            
+            // Disable button during process
+            const btn = document.getElementById(claiming ? 'pick-btn' : 'unselect-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = claiming ? "Assigning..." : "Releasing...";
+            }
+
             runTransaction(itemRef, (currentData) => {
                 if (currentData === null) return currentData; 
+                
                 if (claiming) {
+                    // Try to claim it if it's free
                     if (currentData.takenBy === "") {
                         currentData.takenBy = userId;
                         return currentData;
                     } else {
-                        return; // Abort
+                        // Failed to claim (someone else got it)
+                        return; 
                     }
                 } else {
+                    // Try to unselect it if it's ours
                     if (currentData.takenBy === userId) {
                         currentData.takenBy = "";
                         return currentData;
                     }
                 }
             }).then(result => {
+                if (btn) {
+                    btn.disabled = false; // Re-enable button on completion
+                }
                 if (!result.committed && claiming) {
-                    alert("Sorry, that name was just taken by someone else!");
+                    alert("Assignment Failed: The system tried to assign you a name, but another user claimed it at the same moment. Please try again.");
                 }
             }).catch(console.error);
         }
