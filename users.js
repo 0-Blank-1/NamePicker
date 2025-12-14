@@ -1,12 +1,13 @@
 // WARNING: This file is publicly accessible and readable by anyone who visits your website.
 // Do not use this method for sensitive data.
 
-const AUTHORIZED_USERS = {
-    // Format: "Username": "password"
+window.AUTHORIZED_USERS = {
     "Saurav": "admin",
     "Ashruk": "pass123",
     "Arushi": "secret",
     "TestUser": "test"
+};
+
     // Add more users here:
     // "NewUser": "their_password",
 };
