@@ -125,24 +125,28 @@ input[type="text"] {
 ================================ */
 
 /* Snow layer */
+/* ================================
+   ❄️ BIG FALLING SNOWFLAKES
+================================ */
 body::before {
     content: "";
     position: fixed;
-    top: -200px;
+    top: -300px;
     left: 0;
     width: 100%;
-    height: 200%;
+    height: 250%;
     pointer-events: none;
     background-image:
-        radial-gradient(3px 3px at 20px 30px, white 50%, transparent 51%),
-        radial-gradient(2px 2px at 100px 150px, white 50%, transparent 51%),
-        radial-gradient(4px 4px at 200px 80px, white 50%, transparent 51%),
-        radial-gradient(2px 2px at 300px 200px, white 50%, transparent 51%),
-        radial-gradient(3px 3px at 400px 100px, white 50%, transparent 51%);
-    background-size: 500px 500px;
-    animation: snowfall 20s linear infinite;
-    opacity: 0.8;
+        radial-gradient(8px 8px at 50px 50px, white 50%, transparent 51%),
+        radial-gradient(6px 6px at 150px 200px, white 50%, transparent 51%),
+        radial-gradient(10px 10px at 300px 100px, white 50%, transparent 51%),
+        radial-gradient(7px 7px at 450px 300px, white 50%, transparent 51%),
+        radial-gradient(9px 9px at 600px 150px, white 50%, transparent 51%);
+    background-size: 700px 700px;
+    animation: snowfall 18s linear infinite;
+    opacity: 0.85;
 }
+
 
 /* Snow animation */
 @keyframes snowfall {
@@ -154,6 +158,44 @@ body::before {
     }
 }
 
+    /* ================================
+   🎅 SANTA HAT
+================================ */
+.card {
+    position: relative;
+}
+
+/* Hat body */
+.card::before {
+    content: "";
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-10deg);
+    width: 90px;
+    height: 55px;
+    background: #c0392b;
+    border-radius: 0 0 45px 45px;
+    animation: hat-wiggle 3s ease-in-out infinite;
+}
+
+/* Hat pom-pom */
+.card::after {
+    content: "";
+    position: absolute;
+    top: -65px;
+    left: calc(50% + 40px);
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+}
+
+/* Wiggle animation */
+@keyframes hat-wiggle {
+    0%, 100% { transform: translateX(-50%) rotate(-10deg); }
+    50% { transform: translateX(-50%) rotate(5deg); }
+}
 
         
     </style>
@@ -420,5 +462,60 @@ body::before {
             }).catch(console.error);
         }
     </script>
+
+    <script>
+const confettiColors = ["#e74c3c", "#2ecc71", "#f1c40f", "#ffffff"];
+
+function launchConfetti() {
+    for (let i = 0; i < 120; i++) {
+        const confetti = document.createElement("div");
+        confetti.style.position = "fixed";
+        confetti.style.top = "-10px";
+        confetti.style.left = Math.random() * 100 + "vw";
+        confetti.style.width = "8px";
+        confetti.style.height = "8px";
+        confetti.style.backgroundColor =
+            confettiColors[Math.floor(Math.random() * confettiColors.length)];
+        confetti.style.opacity = Math.random();
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        confetti.style.zIndex = 9999;
+        confetti.style.borderRadius = "2px";
+        confetti.style.transition = "transform 3s linear, top 3s linear";
+
+        document.body.appendChild(confetti);
+
+        requestAnimationFrame(() => {
+            confetti.style.top = "110vh";
+            confetti.style.transform += " translateY(110vh)";
+        });
+
+        setTimeout(() => confetti.remove(), 3000);
+    }
+}
+
+/* Watch for assignment appearing */
+const observer = new MutationObserver(() => {
+    if (document.querySelector(".assigned-name")) {
+        launchConfetti();
+        observer.disconnect();
+    }
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
+
+    <script>
+document.addEventListener("click", () => {
+    const audio = document.querySelector("audio");
+    if (audio && audio.paused) {
+        audio.volume = 0.6;
+        audio.play().catch(() => {});
+    }
+}, { once: true });
+</script>
+
+
+
+    
 </body>
 </html>
