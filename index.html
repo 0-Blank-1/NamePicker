@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Name Picker</title>
+    <title>Secret Santa</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+     
         /* Containers */
         .container { width: 100%; max-width: 500px; padding: 20px; }
         .hidden { display: none !important; }
@@ -54,11 +55,14 @@
     </style>
 </head>
 <body>
-
+       <audio>
+            <source src="Christmas.mp3" type="audio/mpeg">
+        </audio>
+    
     <div id="login-section" class="container">
         <div class="card">
-            <h1>Welcome</h1>
-            <p>Please enter your Name or Student ID to continue.</p>
+            <h1>Welcome To Secret Santa</h1>
+            <p>Please enter your to continue.</p>
             <form id="login-form">
                 <input type="text" id="username-input" placeholder="e.g. John Doe" required autocomplete="off">
                 <br>
@@ -208,7 +212,7 @@
             } else if (availableKeys.length > 0) {
                 // SCENARIO B: NEEDS TO PICK
                 statusArea.innerHTML = `
-                    <p>Hello <b>${userName}!</b> Ready to pick your name?</p>
+                    <p>Hello <b>${userName}!</b> Ready to pick your <b>giftee</b>?</p>
                     <button id="pick-btn" class="btn-success">Get Random Name</button>
                 `;
                 document.getElementById('pick-btn').onclick = () => pickRandomName(availableNamesMap);
