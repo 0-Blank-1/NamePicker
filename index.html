@@ -504,16 +504,33 @@ const observer = new MutationObserver(() => {
 observer.observe(document.body, { childList: true, subtree: true });
 </script>
 
-    <script>
-document.addEventListener("click", () => {
+   <script>
+window.addEventListener("load", () => {
     const audio = document.querySelector("audio");
-    if (audio && audio.paused) {
-        audio.volume = 0.2;
-        audio.play().catch(() => {});
-    }
-}, { once: true });
-</script>
+    if (audio) {
+        // Set initial very low volume
+        audio.volume = 0.0;
 
+        // Enable looping
+        audio.loop = true;
+
+        // Start playing
+        audio.play().catch(() => { console.warn("Autoplay blocked"); });
+
+        // Gradually fade in to a low, comfortable volume
+        const targetVolume = 0.2; // Low volume (soft background music)
+        const step = 0.005;       // Small increment
+        const interval = 100;     // Interval in ms
+        const fadeIn = setInterval(() => {
+            if (audio.volume < targetVolume) {
+                audio.volume = Math.min(audio.volume + step, targetVolume);
+            } else {
+                clearInterval(fadeIn);
+            }
+        }, interval);
+    }
+});
+</script>
 
 
     
