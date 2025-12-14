@@ -52,10 +52,114 @@
         .locked-msg { color: #dc3545; font-size: 0.9rem; margin-top: 10px; font-style: italic; }
         
         .loading { color: #888; margin-top: 20px; }
+
+
+
+        /* ================================
+   🎄 CHRISTMAS WINTER THEME 🎄
+   Design-only — no logic touched
+================================ */
+
+/* Background winter sky */
+body {
+    background: linear-gradient(180deg, #0b1d2a, #12344d, #1e4f6e);
+    color: #f5f7fa;
+    overflow: hidden;
+}
+
+/* Frosted glass card */
+.card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Headings */
+h1 {
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+/* Paragraph text */
+p {
+    color: #e0e6ed;
+}
+
+/* Inputs */
+input[type="text"] {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, #a93226, #c0392b);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #1e8449, #27ae60);
+}
+.btn-success:hover {
+    background: linear-gradient(135deg, #196f3d, #1e8449);
+}
+
+/* Assigned name festive glow */
+.assigned-name {
+    color: #2ecc71;
+    text-shadow: 0 0 15px rgba(46, 204, 113, 0.8);
+}
+
+/* Locked message */
+.locked-msg {
+    color: #ffb3b3;
+}
+
+/* ================================
+   ❄️ FALLING SNOW (CSS ONLY)
+================================ */
+
+/* Snow layer */
+body::before {
+    content: "";
+    position: fixed;
+    top: -200px;
+    left: 0;
+    width: 100%;
+    height: 200%;
+    pointer-events: none;
+    background-image:
+        radial-gradient(3px 3px at 20px 30px, white 50%, transparent 51%),
+        radial-gradient(2px 2px at 100px 150px, white 50%, transparent 51%),
+        radial-gradient(4px 4px at 200px 80px, white 50%, transparent 51%),
+        radial-gradient(2px 2px at 300px 200px, white 50%, transparent 51%),
+        radial-gradient(3px 3px at 400px 100px, white 50%, transparent 51%);
+    background-size: 500px 500px;
+    animation: snowfall 20s linear infinite;
+    opacity: 0.8;
+}
+
+/* Snow animation */
+@keyframes snowfall {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(500px);
+    }
+}
+
+
+        
     </style>
 </head>
 <body>
-           <audio>
+           <audio autoplay>
                 <source src="Christmas.mp3" type="audio/mpeg">
             </audio>
     
@@ -73,7 +177,7 @@
 
     <div id="app-section" class="container hidden">
         <div class="card">
-            <h1>Name Assignment</h1>
+            <h1>Giftee Selector!🎁</h1>
             
             <div id="status-area">
                 <div class="loading">Loading database...</div>
