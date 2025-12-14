@@ -100,12 +100,16 @@
             measurementId: "G-YHZ5X524MV"
         };
         
+        // ** The target names that users will pick from **
         const NAMES_TO_CREATE = [
-            "Aakriti", "Ashruk", "Arushi ", "Allan", "Ayurda", 
+            "Aakriti", "Ashruk", "Arushi", "Allan", "Ayurda", 
             "Awesome", "Bidhan", "Rainaa", "Rejina", "Rythm",
             "Sampanna", "Saurav", "Shirish", "Shreyas", "Suryansha",
             "Suraj"
         ];
+        
+        // Safety mechanism
+        const MAX_RETRIES = 10; 
         // =========================================================
 
         // Initialize Firebase
@@ -121,10 +125,10 @@
         const statusArea = document.getElementById('status-area');
         const remainingEl = document.getElementById('remaining-count');
 
-        let userId = null; // Will be set after login
-
+        let userId = null; // Will be set after login (sanitized name/ID)
+        let userName = null; // Original name input by user
+        
         // --- 1. HANDLE LOGIN ---
-        // Check if user previously logged in on this browser
         const savedUser = localStorage.getItem('picker_username');
         if (savedUser) {
             enterApp(savedUser);
@@ -137,7 +141,8 @@
         });
 
         function enterApp(username) {
-            // sanitize username to be safe for database logic
+            userName = username;
+            // sanitize username to be safe for database key/comparison (lowercase, remove non-alphanumeric)
             userId = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
             
             // Save for reload convenience
@@ -175,7 +180,7 @@
         // --- 3. RENDER UI ---
         function renderApp(data) {
             let mySelection = null;
-            let availableNames = [];
+            let availableNamesMap = {}; // Use a map to store the actual name along with the key
 
             // Scan data
             Object.keys(data).forEach(key => {
@@ -184,27 +189,29 @@
                     mySelection = item.name;
                 }
                 if (item.takenBy === "") {
-                    availableNames.push(key);
+                    // Store available names: key -> actual name
+                    availableNamesMap[key] = item.name; 
                 }
             });
 
-            remainingEl.textContent = availableNames.length;
+            const availableKeys = Object.keys(availableNamesMap);
+            remainingEl.textContent = availableKeys.length;
 
             // Logic: Did user already pick?
             if (mySelection) {
                 // SCENARIO A: ALREADY PICKED (LOCKED)
                 statusArea.innerHTML = `
-                    <p>You have been assigned:</p>
+                    <p>Hello **${userName}**! You have been assigned:</p>
                     <div class="assigned-name">${mySelection}</div>
                     <div class="locked-msg">This selection is final. You cannot change it.</div>
                 `;
-            } else if (availableNames.length > 0) {
+            } else if (availableKeys.length > 0) {
                 // SCENARIO B: NEEDS TO PICK
                 statusArea.innerHTML = `
-                    <p>Ready to pick your name?</p>
+                    <p>Hello **${userName}**! Ready to pick your name?</p>
                     <button id="pick-btn" class="btn-success">Get Random Name</button>
                 `;
-                document.getElementById('pick-btn').onclick = () => pickRandomName(availableNames);
+                document.getElementById('pick-btn').onclick = () => pickRandomName(availableNamesMap);
             } else {
                 // SCENARIO C: GAME OVER
                 statusArea.innerHTML = `<p style="color:red; font-weight:bold;">Sorry, all names have been taken!</p>`;
@@ -212,22 +219,80 @@
         }
 
         // --- 4. PICKING LOGIC ---
-        function pickRandomName(availableKeys) {
+        // Pass the map { key: name } to easily access the name for the conflict check
+        function pickRandomName(availableNamesMap) {
             const btn = document.getElementById('pick-btn');
             btn.disabled = true;
             btn.textContent = "Assigning...";
+            
+            const availableKeys = Object.keys(availableNamesMap);
 
-            // Random Logic
-            const randomIndex = Math.floor(Math.random() * availableKeys.length);
-            const randomKey = availableKeys[randomIndex];
+            let randomKey = null;
+            let currentName = null;
+            let conflictFound = false;
+            let retries = 0;
+
+            // Loop to find a name that is NOT the user's name (case-insensitive)
+            do {
+                if (retries >= MAX_RETRIES) {
+                    // Safety break
+                    conflictFound = false; // Stop trying
+                    randomKey = null; // No assignment
+                    console.warn(`Stopped trying after ${MAX_RETRIES} attempts. User's name might be one of the only remaining options.`);
+                    break; 
+                }
+
+                const randomIndex = Math.floor(Math.random() * availableKeys.length);
+                const tempKey = availableKeys[randomIndex];
+                const tempName = availableNamesMap[tempKey];
+                
+                // Check if the random name is the same as the user's input name
+                if (tempName.toLowerCase() !== userName.toLowerCase()) {
+                    randomKey = tempKey;
+                    currentName = tempName;
+                    conflictFound = false;
+                } else {
+                    conflictFound = true;
+                    retries++;
+                    // Remove the conflicting name from the available pool for this attempt to avoid re-picking
+                    availableKeys.splice(randomIndex, 1); 
+                }
+            } while (conflictFound && availableKeys.length > 0);
+
+
+            if (!randomKey) {
+                // This means the user's name was one of the only/last available choices, 
+                // or retries maxed out (unlikely with >20 names)
+                statusArea.innerHTML = `<p style="color: red; font-weight: bold;">
+                    Could not find an available name that is not your input name (${userName}). Please try again.
+                </p>`;
+                btn.disabled = false;
+                btn.textContent = "Get Random Name";
+                return;
+            }
+
+
             const itemRef = ref(db, `names/${randomKey}`);
 
             // Transaction: Only Claim. No Releasing.
             runTransaction(itemRef, (currentData) => {
+                // This function runs on the server with the latest data for itemRef
+
                 if (currentData === null) return currentData;
 
                 if (currentData.takenBy === "") {
                     // Claim it!
+                    // **CRUCIAL SECONDARY CHECK**: In a highly concurrent scenario, another user 
+                    // could have claimed a name *we* passed over because it matched their name 
+                    // but the transaction still ensures we only claim it if it's currently free ("")
+                    
+                    // We also ensure the name in the database still doesn't match our name.
+                    // This is a safety measure, though the client-side logic should handle it.
+                    if (currentData.name.toLowerCase() === userName.toLowerCase()) {
+                        console.log("Database conflict: Name matches user name on transaction retry. Aborting.");
+                        return; // Abort transaction if it's the conflicting name
+                    }
+                    
                     currentData.takenBy = userId;
                     return currentData;
                 } else {
@@ -236,11 +301,14 @@
                 }
             }).then(result => {
                 if (!result.committed) {
+                    // If the transaction aborted because someone else claimed it, or 
+                    // because our secondary conflict check failed (highly unlikely)
                     alert("Someone grabbed that name milliseconds before you! Trying again...");
+                    // Refresh the state
                     btn.disabled = false;
                     btn.textContent = "Get Random Name";
-                    // In a real app we might auto-retry, but manual click is safer here
                 }
+                // onValue listener handles the successful commit update
             }).catch(console.error);
         }
     </script>
