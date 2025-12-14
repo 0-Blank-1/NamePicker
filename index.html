@@ -24,8 +24,7 @@
         .locked-msg { color: #dc3545; font-size: 0.8rem; font-style: italic; }
     </style>
     
-    <script src="users.js"></script> 
-</head>
+    </head>
 <body>
 
     <div id="login-container" class="container">
@@ -54,14 +53,15 @@
     </div>
 
     <script type="module">
+        // NEW: Import the AUTHORIZED_USERS object from the users.js module
+        import { AUTHORIZED_USERS } from "./users.js"; 
+        
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, runTransaction, set } 
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // IMPORTANT: AUTHORIZED_USERS is loaded from users.js
-
         // =========================================================
-        // FIREBASE CONFIGURATION (Remains the same)
+        // FIREBASE CONFIGURATION
         // =========================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBUZujR22d-CoDfBlHkWKHcYCMcQrJeHog",
@@ -74,7 +74,6 @@
             measurementId: "G-YHZ5X524MV"
         };
         
-        // The list of names to be assigned
         const NAMES_TO_CREATE = [
             "Aakriti", "Ashruk", "Arushi ", "Allan", "Ayurda", 
             "Awesome", "Bidhan", "Rainaa", "Rejina", "Rythm",
@@ -87,10 +86,8 @@
         const db = getDatabase(app);
         const namesRef = ref(db, 'names');
 
-        // Global Variables
         let currentUserId = null; 
 
-        // HTML Elements
         const loginContainer = document.getElementById('login-container');
         const appContainer = document.getElementById('app-container');
         const loginForm = document.getElementById('myForm');
@@ -99,7 +96,7 @@
         const remainingEl = document.getElementById('remaining-count');
 
         // =========================================================
-        // LOGIN LOGIC
+        // LOGIN LOGIC (Now uses the imported AUTHORIZED_USERS)
         // =========================================================
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault(); 
@@ -107,7 +104,8 @@
             const inputName = document.getElementById('Uname').value.trim();
             const inputPass = document.getElementById('pass').value.trim();
 
-            if (window.AUTHORIZED_USERS && window.AUTHORIZED_USERS[inputName] === inputPass) {
+            // CHECK: Does name exist AND password matches the imported object
+            if (AUTHORIZED_USERS[inputName] && AUTHORIZED_USERS[inputName] === inputPass) {
                 currentUserId = inputName; 
                 loadApp();
             } else {
@@ -149,11 +147,11 @@
         function renderApp(data) {
             let mySelection = null;
             let availableNames = [];
-            let allItems = {}; // Store all items for filtering later
+            let allItems = {};
 
             Object.keys(data).forEach(key => {
                 const item = data[key];
-                allItems[key] = item; // Save for filtering
+                allItems[key] = item;
 
                 if (item.takenBy === currentUserId) {
                     mySelection = item.name;
@@ -166,21 +164,17 @@
             remainingEl.textContent = availableNames.length;
 
             if (mySelection) {
-                // SCENARIO A: Already has a name
                 statusArea.innerHTML = `
                     <p>You have been assigned:</p>
                     <div class="assigned-name">${mySelection}</div>
                     <div class="locked-msg">This selection is locked to your account.</div>
                 `;
             } else if (availableNames.length > 0) {
-                // SCENARIO B: Needs to pick
                 statusArea.innerHTML = `
                     <button id="pick-btn" style="background-color:#28a745;">Get Random Name</button>
                 `;
-                // Pass all item data to pickRandomName for filtering
                 document.getElementById('pick-btn').onclick = () => pickRandomName(allItems, availableNames);
             } else {
-                // SCENARIO C: None left
                 statusArea.innerHTML = `<p style="color:red; font-weight:bold;">All names are taken!</p>`;
             }
         }
@@ -190,14 +184,10 @@
             btn.disabled = true;
             btn.textContent = "Assigning...";
             
-            // ----------------------------------------------------
-            // NEW FILTERING LOGIC: Remove names matching the username
-            // ----------------------------------------------------
             const filteredKeys = availableKeys.filter(key => {
                 const nameInDatabase = allItems[key].name;
                 return nameInDatabase !== currentUserId;
             });
-            // ----------------------------------------------------
 
             if (filteredKeys.length === 0) {
                 alert(`All remaining available names are either taken or match your username (${currentUserId}). No name could be assigned.`);
@@ -206,7 +196,6 @@
                 return;
             }
 
-            // Pick a random key from the *filtered* list
             const randomIndex = Math.floor(Math.random() * filteredKeys.length);
             const randomKey = filteredKeys[randomIndex];
             const itemRef = ref(db, `names/${randomKey}`);
