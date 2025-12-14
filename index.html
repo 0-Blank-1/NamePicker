@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secret Santa</title>
+
+    <link rel="icon" type="image/png" href="favicon.png">
+    
     <style>
         
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -503,34 +506,15 @@ const observer = new MutationObserver(() => {
 
 observer.observe(document.body, { childList: true, subtree: true });
 </script>
-
-   <script>
-window.addEventListener("load", () => {
+ <script>
+document.addEventListener("click", () => {
     const audio = document.querySelector("audio");
-    if (audio) {
-        // Set initial very low volume
-        audio.volume = 0.0;
-
-        // Enable looping
-        audio.loop = true;
-
-        // Start playing
-        audio.play().catch(() => { console.warn("Autoplay blocked"); });
-
-        // Gradually fade in to a low, comfortable volume
-        const targetVolume = 0.2; // Low volume (soft background music)
-        const step = 0.005;       // Small increment
-        const interval = 100;     // Interval in ms
-        const fadeIn = setInterval(() => {
-            if (audio.volume < targetVolume) {
-                audio.volume = Math.min(audio.volume + step, targetVolume);
-            } else {
-                clearInterval(fadeIn);
-            }
-        }, interval);
+    if (audio && audio.paused) {
+        audio.volume = 0.2;
+        audio.play().catch(() => {});
     }
-});
-</script>
+}, { once: true });
+</script> 
 
 
     
