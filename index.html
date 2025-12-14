@@ -24,8 +24,7 @@
         .assigned-name { font-size: 2.5rem; font-weight: bold; color: #28a745; margin: 20px 0; }
         .locked-msg { color: #dc3545; font-size: 0.8rem; font-style: italic; }
     </style>
-    
-    </head>
+</head>
 <body>
 
     <div id="login-container" class="container">
@@ -54,15 +53,24 @@
     </div>
 
     <script type="module">
-        // NEW: Import the AUTHORIZED_USERS object from the users.js module
-        import { AUTHORIZED_USERS } from "./users.js"; 
-        
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue, runTransaction, set } 
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         // =========================================================
-        // FIREBASE CONFIGURATION
+        // 1. AUTHORIZED USERS (Now back in the main file)
+        // =========================================================
+        const AUTHORIZED_USERS = {
+            // Format: "Username": "password"
+            "Saurav": "admin",
+            "Ashruk": "pass123",
+            "Arushi": "secret",
+            "TestUser": "test"
+            // Add more users here:
+        };
+
+        // =========================================================
+        // 2. FIREBASE CONFIGURATION
         // =========================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBUZujR22d-CoDfBlHkWKHcYCMcQrJeHog",
@@ -97,7 +105,7 @@
         const remainingEl = document.getElementById('remaining-count');
 
         // =========================================================
-        // LOGIN LOGIC (Now uses the imported AUTHORIZED_USERS)
+        // 3. LOGIN LOGIC
         // =========================================================
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault(); 
@@ -105,7 +113,6 @@
             const inputName = document.getElementById('Uname').value.trim();
             const inputPass = document.getElementById('pass').value.trim();
 
-            // CHECK: Does name exist AND password matches the imported object
             if (AUTHORIZED_USERS[inputName] && AUTHORIZED_USERS[inputName] === inputPass) {
                 currentUserId = inputName; 
                 loadApp();
@@ -120,43 +127,17 @@
             appContainer.classList.remove('hidden');
             document.getElementById('welcome-header').textContent = `Hi, ${currentUserId}`;
 
-            // =========================================================
-        // APP LOGIC
-        // =========================================================
-        function startDatabaseListener() {
-            console.log(`[DEBUG] Starting database listener for user: ${currentUserId}`); // Debug 1
-
-            onValue(namesRef, (snapshot) => {
-                const data = snapshot.val();
-                console.log("[DEBUG] Firebase Data Snapshot Received:", data); // Debug 2
-
-                if (!data) {
-                    console.log("[DEBUG] Data is empty. Running setupInitialData."); // Debug 3
-                    setupInitialData();
-                    return;
-                }
-                
-                // Check if the data is an empty object {}
-                if (Object.keys(data).length === 0) {
-                    console.log("[DEBUG] Data is an empty object {}. Running setupInitialData."); // Debug 4
-                    setupInitialData();
-                    return;
-                }
-                
-                console.log("[DEBUG] Data received. Rendering app."); // Debug 5
-                renderApp(data);
-            });
-        }
-// ... (The rest of your code continues below this)
+            startDatabaseListener();
         }
 
         // =========================================================
-        // APP LOGIC
+        // 4. APP LOGIC
         // =========================================================
         function startDatabaseListener() {
             onValue(namesRef, (snapshot) => {
                 const data = snapshot.val();
-                if (!data) {
+                
+                if (!data || Object.keys(data).length === 0) {
                     setupInitialData();
                     return;
                 }
