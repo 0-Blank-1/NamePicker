@@ -10,6 +10,5 @@ window.AUTHORIZED_USERS = {
 
     // Add more users here:
     // "NewUser": "their_password",
-};
 
 // The main script will access this AUTHORIZED_USERS object.
