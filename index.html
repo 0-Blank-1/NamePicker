@@ -3,82 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Name Picker</title>
+    <title>Secure Name Picker</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         
-        /* Containers */
-        .container { width: 100%; max-width: 500px; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         .hidden { display: none !important; }
 
-        /* Login Card */
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        h1 { margin-top: 0; color: #2c3e50; }
         
-        h1 { color: #2c3e50; margin-bottom: 20px; font-size: 1.8rem; }
-        p { color: #666; margin-bottom: 25px; }
+        /* Form Styling */
+        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #0056b3; }
+        
+        .error-msg { color: red; font-size: 0.9rem; margin-top: 10px; display: none; }
 
-        /* Form Elements */
-        input[type="text"] {
-            width: 80%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            text-align: center;
-        }
-        input[type="text"]:focus { border-color: #007bff; outline: none; }
-
-        button { 
-            padding: 12px 30px; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 1rem; 
-            transition: 0.2s;
-        }
-        
-        /* Button Colors */
-        .btn-primary { background-color: #007bff; color: white; }
-        .btn-primary:hover { background-color: #0056b3; }
-        
-        .btn-success { background-color: #28a745; color: white; }
-        .btn-success:hover { background-color: #218838; }
-
-        /* Assignment Display */
-        .assigned-name { font-size: 3rem; font-weight: 800; color: #28a745; margin: 20px 0; }
-        .locked-msg { color: #dc3545; font-size: 0.9rem; margin-top: 10px; font-style: italic; }
-        
-        .loading { color: #888; margin-top: 20px; }
+        /* App Styling */
+        .assigned-name { font-size: 2.5rem; font-weight: bold; color: #28a745; margin: 20px 0; }
+        .locked-msg { color: #dc3545; font-size: 0.8rem; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <div id="login-section" class="container">
-        <div class="card">
-            <h1>Welcome</h1>
-            <p>Please enter your Name or Student ID to continue.</p>
-            <form id="login-form">
-                <input type="text" id="username-input" placeholder="e.g. John Doe" required autocomplete="off">
-                <br>
-                <button type="submit" class="btn-primary">Enter</button>
-            </form>
-        </div>
+    <div id="login-container" class="container">
+        <h1>Login</h1>
+        <form id="myForm">
+            <label for="Uname">Username</label>
+            <input type="text" name="Uname" id="Uname" required autocomplete="off">
+
+            <label for="pass">Password</label>
+            <input type="password" name="pass" id="pass" required>
+
+            <br><br>
+            <button type="submit" id="mySubmit">Login</button>
+            <div id="error-display" class="error-msg">Error Input >_<!</div>
+        </form>
     </div>
 
-    <div id="app-section" class="container hidden">
-        <div class="card">
-            <h1>Name Assignment</h1>
-            
-            <div id="status-area">
-                <div class="loading">Loading database...</div>
-            </div>
-
-            <p style="margin-top: 30px; font-size: 0.9rem;">
-                Names remaining: <b id="remaining-count">...</b>
-            </p>
+    <div id="app-container" class="container hidden">
+        <h1 id="welcome-header">Welcome</h1>
+        
+        <div id="status-area">
+            <p>Loading database...</p>
         </div>
+
+        <p>Names remaining: <b id="remaining-count">...</b></p>
     </div>
 
     <script type="module">
@@ -87,7 +57,19 @@
             from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         // =========================================================
-        // YOUR CONFIGURATION
+        // 1. USER CONFIGURATION (EDIT THIS LIST MANUALLY)
+        // =========================================================
+        // Format is "Username": "Password"
+        // Usernames are Case Sensitive! (Saurav is different from saurav)
+        const AUTHORIZED_USERS = {
+            "Saurav": "admin",
+            "Ashruk": "pass123",
+            "Arushi": "secret",
+            "Guest": "12345"
+        };
+
+        // =========================================================
+        // 2. FIREBASE CONFIGURATION
         // =========================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBUZujR22d-CoDfBlHkWKHcYCMcQrJeHog",
@@ -100,62 +82,67 @@
             measurementId: "G-YHZ5X524MV"
         };
         
+        // The list of names to be assigned
         const NAMES_TO_CREATE = [
             "Aakriti", "Ashruk", "Arushi ", "Allan", "Ayurda", 
             "Awesome", "Bidhan", "Rainaa", "Rejina", "Rythm",
             "Sampanna", "Saurav", "Shirish", "Shreyas", "Suryansha",
             "Suraj"
         ];
-        // =========================================================
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const namesRef = ref(db, 'names');
 
-        // DOM Elements
-        const loginSection = document.getElementById('login-section');
-        const appSection = document.getElementById('app-section');
-        const loginForm = document.getElementById('login-form');
-        const userInput = document.getElementById('username-input');
+        // Global Variables
+        let currentUserId = null; 
+
+        // HTML Elements
+        const loginContainer = document.getElementById('login-container');
+        const appContainer = document.getElementById('app-container');
+        const loginForm = document.getElementById('myForm');
+        const errorDisplay = document.getElementById('error-display');
         const statusArea = document.getElementById('status-area');
         const remainingEl = document.getElementById('remaining-count');
 
-        let userId = null; // Will be set after login
-
-        // --- 1. HANDLE LOGIN ---
-        // Check if user previously logged in on this browser
-        const savedUser = localStorage.getItem('picker_username');
-        if (savedUser) {
-            enterApp(savedUser);
-        }
-
+        // =========================================================
+        // 3. LOGIN LOGIC
+        // =========================================================
         loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const val = userInput.value.trim();
-            if (val) enterApp(val);
+            e.preventDefault(); // Stop page reload
+
+            const inputName = document.getElementById('Uname').value.trim();
+            const inputPass = document.getElementById('pass').value.trim();
+
+            // CHECK: Does name exist AND does password match?
+            if (AUTHORIZED_USERS[inputName] && AUTHORIZED_USERS[inputName] === inputPass) {
+                // Success!
+                currentUserId = inputName; // Use the actual name as the ID
+                loadApp();
+            } else {
+                // Fail!
+                errorDisplay.style.display = "block";
+                setTimeout(() => errorDisplay.style.display = "none", 3000);
+            }
         });
 
-        function enterApp(username) {
-            // sanitize username to be safe for database logic
-            userId = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            
-            // Save for reload convenience
-            localStorage.setItem('picker_username', username);
+        function loadApp() {
+            // Hide Login, Show App
+            loginContainer.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            document.getElementById('welcome-header').textContent = `Hi, ${currentUserId}`;
 
-            // Switch Screens
-            loginSection.classList.add('hidden');
-            appSection.classList.remove('hidden');
-
-            // Start Listening to Database
+            // Connect to DB
             startDatabaseListener();
         }
 
-        // --- 2. DATABASE LISTENER ---
+        // =========================================================
+        // 4. APP LOGIC (Only runs after login)
+        // =========================================================
         function startDatabaseListener() {
             onValue(namesRef, (snapshot) => {
                 const data = snapshot.val();
-
                 if (!data) {
                     setupInitialData();
                     return;
@@ -172,15 +159,14 @@
             set(namesRef, initialData);
         }
 
-        // --- 3. RENDER UI ---
         function renderApp(data) {
             let mySelection = null;
             let availableNames = [];
 
-            // Scan data
             Object.keys(data).forEach(key => {
                 const item = data[key];
-                if (item.takenBy === userId) {
+                // Check if THIS user (Saurav, etc) already took this name
+                if (item.takenBy === currentUserId) {
                     mySelection = item.name;
                 }
                 if (item.takenBy === "") {
@@ -190,56 +176,45 @@
 
             remainingEl.textContent = availableNames.length;
 
-            // Logic: Did user already pick?
             if (mySelection) {
-                // SCENARIO A: ALREADY PICKED (LOCKED)
+                // Already has a name
                 statusArea.innerHTML = `
                     <p>You have been assigned:</p>
                     <div class="assigned-name">${mySelection}</div>
-                    <div class="locked-msg">This selection is final. You cannot change it.</div>
+                    <div class="locked-msg">This selection is locked to your account.</div>
                 `;
             } else if (availableNames.length > 0) {
-                // SCENARIO B: NEEDS TO PICK
+                // Needs to pick
                 statusArea.innerHTML = `
-                    <p>Ready to pick your name?</p>
-                    <button id="pick-btn" class="btn-success">Get Random Name</button>
+                    <button id="pick-btn" style="background-color:#28a745;">Get Random Name</button>
                 `;
                 document.getElementById('pick-btn').onclick = () => pickRandomName(availableNames);
             } else {
-                // SCENARIO C: GAME OVER
-                statusArea.innerHTML = `<p style="color:red; font-weight:bold;">Sorry, all names have been taken!</p>`;
+                // None left
+                statusArea.innerHTML = `<p style="color:red; font-weight:bold;">All names are taken!</p>`;
             }
         }
 
-        // --- 4. PICKING LOGIC ---
         function pickRandomName(availableKeys) {
             const btn = document.getElementById('pick-btn');
             btn.disabled = true;
             btn.textContent = "Assigning...";
 
-            // Random Logic
             const randomIndex = Math.floor(Math.random() * availableKeys.length);
             const randomKey = availableKeys[randomIndex];
             const itemRef = ref(db, `names/${randomKey}`);
 
-            // Transaction: Only Claim. No Releasing.
             runTransaction(itemRef, (currentData) => {
                 if (currentData === null) return currentData;
-
                 if (currentData.takenBy === "") {
-                    // Claim it!
-                    currentData.takenBy = userId;
+                    currentData.takenBy = currentUserId; // Claim with Username
                     return currentData;
-                } else {
-                    // Someone else took it
-                    return; 
                 }
             }).then(result => {
                 if (!result.committed) {
-                    alert("Someone grabbed that name milliseconds before you! Trying again...");
+                    alert("Someone took that name just now. Try again.");
                     btn.disabled = false;
                     btn.textContent = "Get Random Name";
-                    // In a real app we might auto-retry, but manual click is safer here
                 }
             }).catch(console.error);
         }
