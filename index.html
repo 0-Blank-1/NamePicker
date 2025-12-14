@@ -102,7 +102,10 @@
         
         // ** The target names that users will pick from **
         const NAMES_TO_CREATE = [
-            "Aakriti", "Ashruk", "Arushi"
+            "Aakriti", "Ashruk", "Arushi", "Allan", "Ayurda", 
+            "Awesome", "Bidhan", "Rainaa", "Rejina", "Rythm",
+            "Sampanna", "Saurav", "Shirish", "Shreyas", "Suryansha",
+            "Suraj"
         ];
         
         // Safety mechanism
@@ -198,14 +201,14 @@
             if (mySelection) {
                 // SCENARIO A: ALREADY PICKED (LOCKED)
                 statusArea.innerHTML = `
-                    <p>Hello **${userName}**! You have been assigned:</p>
+                    <p>Hello <b>${userName}!</b> You have been assigned:</p>
                     <div class="assigned-name">${mySelection}</div>
                     <div class="locked-msg">This selection is final. You cannot change it.</div>
                 `;
             } else if (availableKeys.length > 0) {
                 // SCENARIO B: NEEDS TO PICK
                 statusArea.innerHTML = `
-                    <p>Hello **${userName}**! Ready to pick your name?</p>
+                    <p>Hello <b>${userName}!</b> Ready to pick your name?</p>
                     <button id="pick-btn" class="btn-success">Get Random Name</button>
                 `;
                 document.getElementById('pick-btn').onclick = () => pickRandomName(availableNamesMap);
