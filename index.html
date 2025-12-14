@@ -120,7 +120,34 @@
             appContainer.classList.remove('hidden');
             document.getElementById('welcome-header').textContent = `Hi, ${currentUserId}`;
 
-            startDatabaseListener();
+            // =========================================================
+        // APP LOGIC
+        // =========================================================
+        function startDatabaseListener() {
+            console.log(`[DEBUG] Starting database listener for user: ${currentUserId}`); // Debug 1
+
+            onValue(namesRef, (snapshot) => {
+                const data = snapshot.val();
+                console.log("[DEBUG] Firebase Data Snapshot Received:", data); // Debug 2
+
+                if (!data) {
+                    console.log("[DEBUG] Data is empty. Running setupInitialData."); // Debug 3
+                    setupInitialData();
+                    return;
+                }
+                
+                // Check if the data is an empty object {}
+                if (Object.keys(data).length === 0) {
+                    console.log("[DEBUG] Data is an empty object {}. Running setupInitialData."); // Debug 4
+                    setupInitialData();
+                    return;
+                }
+                
+                console.log("[DEBUG] Data received. Rendering app."); // Debug 5
+                renderApp(data);
+            });
+        }
+// ... (The rest of your code continues below this)
         }
 
         // =========================================================
