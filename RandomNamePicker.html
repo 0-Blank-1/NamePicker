@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Santa</title>
+
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <style>
+        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+     
+        /* Containers */
+        .container { width: 100%; max-width: 500px; padding: 20px; }
+        .hidden { display: none !important; }
+
+        /* Login Card */
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        
+        h1 { color: #2c3e50; margin-bottom: 20px; font-size: 1.8rem; }
+        p { color: #666; margin-bottom: 25px; }
+
+        /* Form Elements */
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            text-align: center;
+        }
+        input[type="text"]:focus { border-color: #007bff; outline: none; }
+
+        button { 
+            padding: 12px 30px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 1rem; 
+            transition: 0.2s;
+        }
+        
+        /* Button Colors */
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0056b3; }
+        
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-success:hover { background-color: #218838; }
+
+        /* Assignment Display */
+        .assigned-name { font-size: 3rem; font-weight: 800; color: #28a745; margin: 20px 0; }
+        .locked-msg { color: #dc3545; font-size: 0.9rem; margin-top: 10px; font-style: italic; }
+        
+        .loading { color: #888; margin-top: 20px; }
+
+
+
+        /* ================================
+   🎄 CHRISTMAS WINTER THEME 🎄
+   Design-only — no logic touched
+================================ */
+
+/* Background winter sky */
+body {
+    background: linear-gradient(180deg, #0b1d2a, #12344d, #1e4f6e);
+    color: #f5f7fa;
+    overflow: hidden;
+}
+
+/* Frosted glass card */
+.card {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Headings */
+h1 {
+    color: #ffffff;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+}
+
+/* Paragraph text */
+p {
+    color: #e0e6ed;
+}
+
+/* Inputs */
+input[type="text"] {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, #a93226, #c0392b);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #1e8449, #27ae60);
+}
+.btn-success:hover {
+    background: linear-gradient(135deg, #196f3d, #1e8449);
+}
+
+/* Assigned name festive glow */
+.assigned-name {
+    color: #2ecc71;
+    text-shadow: 0 0 15px rgba(46, 204, 113, 0.8);
+}
+
+/* Locked message */
+.locked-msg {
+    color: #ffb3b3;
+}
+
+/* ================================
+   ❄️ FALLING SNOW (CSS ONLY)
+================================ */
+
+/* Snow layer */
+/* ================================
+   ❄️ BIG FALLING SNOWFLAKES
+================================ */
+body::before {
+    content: "";
+    position: fixed;
+    top: -300px;
+    left: 0;
+    width: 100%;
+    height: 250%;
+    pointer-events: none;
+    background-image:
+        radial-gradient(8px 8px at 50px 50px, white 50%, transparent 51%),
+        radial-gradient(6px 6px at 150px 200px, white 50%, transparent 51%),
+        radial-gradient(10px 10px at 300px 100px, white 50%, transparent 51%),
+        radial-gradient(7px 7px at 450px 300px, white 50%, transparent 51%),
+        radial-gradient(9px 9px at 600px 150px, white 50%, transparent 51%);
+    background-size: 700px 700px;
+    animation: snowfall 18s linear infinite;
+    opacity: 0.85;
+}
+
+
+/* Snow animation */
+@keyframes snowfall {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(500px);
+    }
+}
+
+    /* ================================
+   🎅 SANTA HAT
+================================ */
+.card {
+    position: relative;
+}
+
+/* Hat body */
+.card::before {
+    content: "";
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-10deg);
+    width: 90px;
+    height: 55px;
+    background: #c0392b;
+    border-radius: 0 0 45px 45px;
+    animation: hat-wiggle 3s ease-in-out infinite;
+}
+
+/* Hat pom-pom */
+.card::after {
+    content: "";
+    position: absolute;
+    top: -65px;
+    left: calc(50% + 40px);
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+}
+
+/* Wiggle animation */
+@keyframes hat-wiggle {
+    0%, 100% { transform: translateX(-50%) rotate(-10deg); }
+    50% { transform: translateX(-50%) rotate(5deg); }
+}
+
+        
+    </style>
+</head>
+<body>
+           <audio autoplay>
+                <source src="Christmas.mp3" type="audio/mpeg">
+            </audio>
+    
+    <div id="login-section" class="container">
+        <div class="card">
+            <h1>Welcome To Secret Santa</h1>
+            <p>Please enter your first name to continue.</p>
+            <form id="login-form">
+                <input type="text" id="username-input" placeholder="eg:- Saurav" required autocomplete="off">
+                <br>
+                <button type="submit" class="btn-primary">Enter</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-section" class="container hidden">
+        <div class="card">
+            <h1>Giftee Selector!🎁</h1>
+            
+            <div id="status-area">
+                <div class="loading">Loading database...</div>
+            </div>
+
+            <p style="margin-top: 30px; font-size: 0.9rem;">
+                Names remaining: <b id="remaining-count">...</b>
+            </p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, runTransaction, set } 
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // =========================================================
+        // YOUR CONFIGURATION
+        // =========================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUZujR22d-CoDfBlHkWKHcYCMcQrJeHog",
+            authDomain: "name-picker-af4cb.firebaseapp.com",
+            databaseURL: "https://name-picker-af4cb-default-rtdb.firebaseio.com",
+            projectId: "name-picker-af4cb",
+            storageBucket: "name-picker-af4cb.firebasestorage.app",
+            messagingSenderId: "756608255624",
+            appId: "1:756608255624:web:23252bfb157d5572ea013d",
+            measurementId: "G-YHZ5X524MV"
+        };
+        
+        // ** The target names that users will pick from **
+        const NAMES_TO_CREATE = [
+            "Aakriti", "Ashruk", "Arushi", "Allan", "Ayurda", 
+            "Awesome", "Bidhan", "Rainaa", "Rejina", "Rythm",
+            "Sampanna", "Saurav", "Shirish", "Shreyas", "Suryansha",
+            "Suraj"
+        ];
+        
+        // Safety mechanism
+        const MAX_RETRIES = 10; 
+        // =========================================================
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const namesRef = ref(db, 'names');
+
+        // DOM Elements
+        const loginSection = document.getElementById('login-section');
+        const appSection = document.getElementById('app-section');
+        const loginForm = document.getElementById('login-form');
+        const userInput = document.getElementById('username-input');
+        const statusArea = document.getElementById('status-area');
+        const remainingEl = document.getElementById('remaining-count');
+
+        let userId = null; // Will be set after login (sanitized name/ID)
+        let userName = null; // Original name input by user
+        
+        // --- 1. HANDLE LOGIN ---
+        const savedUser = localStorage.getItem('picker_username');
+        if (savedUser) {
+            enterApp(savedUser);
+        }
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const val = userInput.value.trim();
+            if (val) enterApp(val);
+        });
+
+        function enterApp(username) {
+            userName = username;
+            // sanitize username to be safe for database key/comparison (lowercase, remove non-alphanumeric)
+            userId = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
+            
+            // Save for reload convenience
+            localStorage.setItem('picker_username', username);
+
+            // Switch Screens
+            loginSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+
+            // Start Listening to Database
+            startDatabaseListener();
+        }
+
+        // --- 2. DATABASE LISTENER ---
+        function startDatabaseListener() {
+            onValue(namesRef, (snapshot) => {
+                const data = snapshot.val();
+
+                if (!data) {
+                    setupInitialData();
+                    return;
+                }
+                renderApp(data);
+            });
+        }
+
+        function setupInitialData() {
+            const initialData = {};
+            NAMES_TO_CREATE.forEach((name, index) => {
+                initialData[`id_${index}`] = { name: name, takenBy: "" };
+            });
+            set(namesRef, initialData);
+        }
+
+        // --- 3. RENDER UI ---
+        function renderApp(data) {
+            let mySelection = null;
+            let availableNamesMap = {}; // Use a map to store the actual name along with the key
+
+            // Scan data
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                if (item.takenBy === userId) {
+                    mySelection = item.name;
+                }
+                if (item.takenBy === "") {
+                    // Store available names: key -> actual name
+                    availableNamesMap[key] = item.name; 
+                }
+            });
+
+            const availableKeys = Object.keys(availableNamesMap);
+            remainingEl.textContent = availableKeys.length;
+
+            // Logic: Did user already pick?
+            if (mySelection) {
+                // SCENARIO A: ALREADY PICKED (LOCKED)
+                statusArea.innerHTML = `
+                    <p>Hello <b>${userName}!</b> You have been assigned:</p>
+                    <div class="assigned-name">${mySelection}</div>
+                    <div class="locked-msg">This selection is final. You cannot change it.</div>
+                `;
+            } else if (availableKeys.length > 0) {
+                // SCENARIO B: NEEDS TO PICK
+                statusArea.innerHTML = `
+                    <p>Hello <b>${userName}!</b> Ready to pick your <b>giftee</b>?</p>
+                    <button id="pick-btn" class="btn-success">Get Random Name</button>
+                `;
+                document.getElementById('pick-btn').onclick = () => pickRandomName(availableNamesMap);
+            } else {
+                // SCENARIO C: GAME OVER
+                statusArea.innerHTML = `<p style="color:red; font-weight:bold;">Sorry, all names have been taken!</p>`;
+            }
+        }
+
+        // --- 4. PICKING LOGIC ---
+        // Pass the map { key: name } to easily access the name for the conflict check
+        function pickRandomName(availableNamesMap) {
+            const btn = document.getElementById('pick-btn');
+            btn.disabled = true;
+            btn.textContent = "Assigning...";
+            
+            const availableKeys = Object.keys(availableNamesMap);
+
+            let randomKey = null;
+            let currentName = null;
+            let conflictFound = false;
+            let retries = 0;
+
+            // Loop to find a name that is NOT the user's name (case-insensitive)
+            do {
+                if (retries >= MAX_RETRIES) {
+                    // Safety break
+                    conflictFound = false; // Stop trying
+                    randomKey = null; // No assignment
+                    console.warn(`Stopped trying after ${MAX_RETRIES} attempts. User's name might be one of the only remaining options.`);
+                    break; 
+                }
+
+                const randomIndex = Math.floor(Math.random() * availableKeys.length);
+                const tempKey = availableKeys[randomIndex];
+                const tempName = availableNamesMap[tempKey];
+                
+                // Check if the random name is the same as the user's input name
+                if (tempName.toLowerCase() !== userName.toLowerCase()) {
+                    randomKey = tempKey;
+                    currentName = tempName;
+                    conflictFound = false;
+                } else {
+                    conflictFound = true;
+                    retries++;
+                    // Remove the conflicting name from the available pool for this attempt to avoid re-picking
+                    availableKeys.splice(randomIndex, 1); 
+                }
+            } while (conflictFound && availableKeys.length > 0);
+
+
+            if (!randomKey) {
+                // This means the user's name was one of the only/last available choices, 
+                // or retries maxed out (unlikely with >20 names)
+                statusArea.innerHTML = `<p style="color: red; font-weight: bold;">
+                    Could not find an available name that is not your input name (${userName}). Please try again.
+                </p>`;
+                btn.disabled = false;
+                btn.textContent = "Get Random Name";
+                return;
+            }
+
+
+            const itemRef = ref(db, `names/${randomKey}`);
+
+            // Transaction: Only Claim. No Releasing.
+            runTransaction(itemRef, (currentData) => {
+                // This function runs on the server with the latest data for itemRef
+
+                if (currentData === null) return currentData;
+
+                if (currentData.takenBy === "") {
+                    // Claim it!
+                    // **CRUCIAL SECONDARY CHECK**: In a highly concurrent scenario, another user 
+                    // could have claimed a name *we* passed over because it matched their name 
+                    // but the transaction still ensures we only claim it if it's currently free ("")
+                    
+                    // We also ensure the name in the database still doesn't match our name.
+                    // This is a safety measure, though the client-side logic should handle it.
+                    if (currentData.name.toLowerCase() === userName.toLowerCase()) {
+                        console.log("Database conflict: Name matches user name on transaction retry. Aborting.");
+                        return; // Abort transaction if it's the conflicting name
+                    }
+                    
+                    currentData.takenBy = userId;
+                    return currentData;
+                } else {
+                    // Someone else took it
+                    return; 
+                }
+            }).then(result => {
+                if (!result.committed) {
+                    // If the transaction aborted because someone else claimed it, or 
+                    // because our secondary conflict check failed (highly unlikely)
+                    alert("Someone grabbed that name milliseconds before you! Trying again...");
+                    // Refresh the state
+                    btn.disabled = false;
+                    btn.textContent = "Get Random Name";
+                }
+                // onValue listener handles the successful commit update
+            }).catch(console.error);
+        }
+    </script>
+
+    <script>
+const confettiColors = ["#e74c3c", "#2ecc71", "#f1c40f", "#ffffff"];
+
+function launchConfetti() {
+    for (let i = 0; i < 120; i++) {
+        const confetti = document.createElement("div");
+        confetti.style.position = "fixed";
+        confetti.style.top = "-10px";
+        confetti.style.left = Math.random() * 100 + "vw";
+        confetti.style.width = "8px";
+        confetti.style.height = "8px";
+        confetti.style.backgroundColor =
+            confettiColors[Math.floor(Math.random() * confettiColors.length)];
+        confetti.style.opacity = Math.random();
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        confetti.style.zIndex = 9999;
+        confetti.style.borderRadius = "2px";
+        confetti.style.transition = "transform 3s linear, top 3s linear";
+
+        document.body.appendChild(confetti);
+
+        requestAnimationFrame(() => {
+            confetti.style.top = "110vh";
+            confetti.style.transform += " translateY(110vh)";
+        });
+
+        setTimeout(() => confetti.remove(), 3000);
+    }
+}
+
+/* Watch for assignment appearing */
+const observer = new MutationObserver(() => {
+    if (document.querySelector(".assigned-name")) {
+        launchConfetti();
+        observer.disconnect();
+    }
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
+ <script>
+document.addEventListener("click", () => {
+    const audio = document.querySelector("audio");
+    if (audio && audio.paused) {
+        audio.volume = 0.2;
+        audio.play().catch(() => {});
+    }
+}, { once: true });
+</script> 
+
+
+    
+</body>
+</html>
