@@ -1,522 +1,341 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Santa</title>
 
     <link rel="icon" type="image/png" href="favicon.png">
     
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Santa Guesser</title>
     <style>
+        /* ================================
+           CORE STYLES (From Original)
+        ================================ */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
         
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-     
-        /* Containers */
         .container { width: 100%; max-width: 500px; padding: 20px; }
         .hidden { display: none !important; }
 
-        /* Login Card */
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        /* Card Styles */
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; transition: all 0.3s ease; }
         
         h1 { color: #2c3e50; margin-bottom: 20px; font-size: 1.8rem; }
         p { color: #666; margin-bottom: 25px; }
 
         /* Form Elements */
         input[type="text"] {
-            width: 80%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            text-align: center;
+            width: 80%; padding: 12px; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; text-align: center;
         }
         input[type="text"]:focus { border-color: #007bff; outline: none; }
 
         button { 
-            padding: 12px 30px; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 1rem; 
-            transition: 0.2s;
+            padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.2s;
         }
         
-        /* Button Colors */
         .btn-primary { background-color: #007bff; color: white; }
-        .btn-primary:hover { background-color: #0056b3; }
-        
         .btn-success { background-color: #28a745; color: white; }
-        .btn-success:hover { background-color: #218838; }
 
-        /* Assignment Display */
-        .assigned-name { font-size: 3rem; font-weight: 800; color: #28a745; margin: 20px 0; }
-        .locked-msg { color: #dc3545; font-size: 0.9rem; margin-top: 10px; font-style: italic; }
-        
-        .loading { color: #888; margin-top: 20px; }
-
-
+        /* Message Text Styles */
+        .status-msg { font-size: 1.5rem; font-weight: bold; color: #fff; min-height: 60px; }
+        .error-text { color: #ff6b6b; font-weight: bold; margin-top: 10px; }
 
         /* ================================
-   🎄 CHRISTMAS WINTER THEME 🎄
-   Design-only — no logic touched
-================================ */
+           CHRISTMAS WINTER THEME 
+        ================================ */
+        body { background: linear-gradient(180deg, #0b1d2a, #12344d, #1e4f6e); color: #f5f7fa; }
 
-/* Background winter sky */
-body {
-    background: linear-gradient(180deg, #0b1d2a, #12344d, #1e4f6e);
-    color: #f5f7fa;
-    overflow: hidden;
-}
+        /* Frosted glass card */
+        .card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+        }
 
-/* Frosted glass card */
-.card {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-}
+        h1 { color: #ffffff; text-shadow: 0 0 12px rgba(255, 255, 255, 0.3); }
+        p { color: #e0e6ed; }
 
-/* Headings */
-h1 {
-    color: #ffffff;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
-}
+        input[type="text"] { background: rgba(255, 255, 255, 0.9); border: none; box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1); color: #333; }
 
-/* Paragraph text */
-p {
-    color: #e0e6ed;
-}
+        .btn-primary { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+        .btn-primary:hover { background: linear-gradient(135deg, #a93226, #c0392b); }
+        .btn-success { background: linear-gradient(135deg, #1e8449, #27ae60); }
+        .btn-success:hover { background: linear-gradient(135deg, #196f3d, #1e8449); }
 
-/* Inputs */
-input[type="text"] {
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-}
+        /* ================================
+           SNOW & HAT ANIMATION
+        ================================ */
+        body::before {
+            content: ""; position: fixed; top: -300px; left: 0; width: 100%; height: 250%; pointer-events: none;
+            background-image:
+                radial-gradient(8px 8px at 50px 50px, white 50%, transparent 51%),
+                radial-gradient(6px 6px at 150px 200px, white 50%, transparent 51%),
+                radial-gradient(10px 10px at 300px 100px, white 50%, transparent 51%);
+            background-size: 700px 700px; animation: snowfall 18s linear infinite; opacity: 0.85;
+        }
 
-/* Buttons */
-.btn-primary {
-    background: linear-gradient(135deg, #c0392b, #e74c3c);
-}
-.btn-primary:hover {
-    background: linear-gradient(135deg, #a93226, #c0392b);
-}
+        @keyframes snowfall { 0% { transform: translateY(0); } 100% { transform: translateY(500px); } }
 
-.btn-success {
-    background: linear-gradient(135deg, #1e8449, #27ae60);
-}
-.btn-success:hover {
-    background: linear-gradient(135deg, #196f3d, #1e8449);
-}
-
-/* Assigned name festive glow */
-.assigned-name {
-    color: #2ecc71;
-    text-shadow: 0 0 15px rgba(46, 204, 113, 0.8);
-}
-
-/* Locked message */
-.locked-msg {
-    color: #ffb3b3;
-}
-
-/* ================================
-   ❄️ FALLING SNOW (CSS ONLY)
-================================ */
-
-/* Snow layer */
-/* ================================
-   ❄️ BIG FALLING SNOWFLAKES
-================================ */
-body::before {
-    content: "";
-    position: fixed;
-    top: -300px;
-    left: 0;
-    width: 100%;
-    height: 250%;
-    pointer-events: none;
-    background-image:
-        radial-gradient(8px 8px at 50px 50px, white 50%, transparent 51%),
-        radial-gradient(6px 6px at 150px 200px, white 50%, transparent 51%),
-        radial-gradient(10px 10px at 300px 100px, white 50%, transparent 51%),
-        radial-gradient(7px 7px at 450px 300px, white 50%, transparent 51%),
-        radial-gradient(9px 9px at 600px 150px, white 50%, transparent 51%);
-    background-size: 700px 700px;
-    animation: snowfall 18s linear infinite;
-    opacity: 0.85;
-}
-
-
-/* Snow animation */
-@keyframes snowfall {
-    0% {
-        transform: translateY(0);
-    }
-    100% {
-        transform: translateY(500px);
-    }
-}
-
-    /* ================================
-   🎅 SANTA HAT
-================================ */
-.card {
-    position: relative;
-}
-
-/* Hat body */
-.card::before {
-    content: "";
-    position: absolute;
-    top: -45px;
-    left: 50%;
-    transform: translateX(-50%) rotate(-10deg);
-    width: 90px;
-    height: 55px;
-    background: #c0392b;
-    border-radius: 0 0 45px 45px;
-    animation: hat-wiggle 3s ease-in-out infinite;
-}
-
-/* Hat pom-pom */
-.card::after {
-    content: "";
-    position: absolute;
-    top: -65px;
-    left: calc(50% + 40px);
-    width: 20px;
-    height: 20px;
-    background: white;
-    border-radius: 50%;
-}
-
-/* Wiggle animation */
-@keyframes hat-wiggle {
-    0%, 100% { transform: translateX(-50%) rotate(-10deg); }
-    50% { transform: translateX(-50%) rotate(5deg); }
-}
-
-        
+        .card { position: relative; }
+        .card::before {
+            content: ""; position: absolute; top: -45px; left: 50%; transform: translateX(-50%) rotate(-10deg);
+            width: 90px; height: 55px; background: #c0392b; border-radius: 0 0 45px 45px;
+            animation: hat-wiggle 3s ease-in-out infinite;
+        }
+        .card::after {
+            content: ""; position: absolute; top: -65px; left: calc(50% + 40px); width: 20px; height: 20px;
+            background: white; border-radius: 50%;
+        }
+        @keyframes hat-wiggle {
+            0%, 100% { transform: translateX(-50%) rotate(-10deg); }
+            50% { transform: translateX(-50%) rotate(5deg); }
+        }
     </style>
 </head>
 <body>
-           <audio autoplay>
-                <source src="Christmas.mp3" type="audio/mpeg">
-            </audio>
-    
+
+    <audio id="bg-music" loop>
+        <source src="Christmas.mp3" type="audio/mpeg">
+    </audio>
+
     <div id="login-section" class="container">
         <div class="card">
-            <h1>Welcome To Secret Santa</h1>
-            <p>Please enter your first name to continue.</p>
+            <h1>Secret Santa Portal</h1>
+            <p>Enter your name to access the database.</p>
             <form id="login-form">
-                <input type="text" id="username-input" placeholder="eg:- Saurav" required autocomplete="off">
+                <input type="text" id="username-input" placeholder="Your Name" required autocomplete="off">
                 <br>
-                <button type="submit" class="btn-primary">Enter</button>
+                <button type="submit" class="btn-primary">Access System</button>
             </form>
+            <p id="login-error" class="error-text hidden">Name not found in database.</p>
         </div>
     </div>
 
-    <div id="app-section" class="container hidden">
+    <div id="loading-section" class="container hidden">
         <div class="card">
-            <h1>Giftee Selector!🎁</h1>
-            
-            <div id="status-area">
-                <div class="loading">Loading database...</div>
-            </div>
-
-            <p style="margin-top: 30px; font-size: 0.9rem;">
-                Names remaining: <b id="remaining-count">...</b>
-            </p>
+            <h1 id="loading-text" class="status-msg">hmm...</h1>
+            <div id="spinner" class="hidden" style="font-size: 3rem; margin-top:20px;">🤔</div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, runTransaction, set } 
-            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <div id="guess-section" class="container hidden">
+        <div class="card">
+            <h1>Who is your Santa?</h1>
+            <p>The database found you! Now, guess who picked you.</p>
+            <form id="guess-form">
+                <input type="text" id="guess-input" placeholder="Guess a name..." required autocomplete="off">
+                <br>
+                <button type="submit" class="btn-success">Check Database</button>
+            </form>
+            <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">Guesses remaining: <span id="guesses-left">4</span></p>
+        </div>
+    </div>
 
-        // =========================================================
-        // YOUR CONFIGURATION
-        // =========================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBUZujR22d-CoDfBlHkWKHcYCMcQrJeHog",
-            authDomain: "name-picker-af4cb.firebaseapp.com",
-            databaseURL: "https://name-picker-af4cb-default-rtdb.firebaseio.com",
-            projectId: "name-picker-af4cb",
-            storageBucket: "name-picker-af4cb.firebasestorage.app",
-            messagingSenderId: "756608255624",
-            appId: "1:756608255624:web:23252bfb157d5572ea013d",
-            measurementId: "G-YHZ5X524MV"
-        };
+    <div id="result-section" class="container hidden">
+        <div class="card">
+            <h1 style="color: #e74c3c;">Result</h1>
+            <p id="result-message" class="status-msg" style="font-size: 1.2rem; color: #ffb3b3;"></p>
+            <br>
+            <button onclick="resetGuess()" class="btn-primary">Try Again</button>
+        </div>
+    </div>
+
+    <div id="game-over-section" class="container hidden">
+        <div class="card">
+            <h1 style="color: #e74c3c; font-size: 3rem;">Oh No!</h1>
+            <p class="status-msg">You ran out of Guesses! >-&lt;</p>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        //  CONFIGURATION (EDIT HERE)
+        // ==========================================
         
-        // ** The target names that users will pick from **
-        const NAMES_TO_CREATE = [
+        // The names allowed to log in
+        const ALLOWED_NAMES = [
             "Aakriti", "Ashruk", "Arushi", "Allan", "Ayurda", 
             "Awesome", "Bidhan", "Rainaa", "Rejina", "Rythm",
             "Sampanna", "Saurav", "Shirish", "Shreyas", "Suryansha",
-            "Suraj"
+            "Suraj", "Rahul", "Rohan", "Soham", "Shreejal", "Tanuska"
         ];
-        
-        // Safety mechanism
-        const MAX_RETRIES = 10; 
-        // =========================================================
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const namesRef = ref(db, 'names');
+        // The "Wrong" messages displayed after the fake loading
+        const WRONG_MESSAGES = [
+            "Opps! Wrong Guess",
+            "hAhAAA! you entered wrong name",
+            "Oh no!, sadly you could not guess your Santa",
+            "Nice try, but nope!🥱",
+            "Santa is gonna be sad😿",
+            "Database says: INCORRECT ❌"
+        ];
 
-        // DOM Elements
+        // Max guesses per device
+        const MAX_GUESSES = 4;
+
+        // ==========================================
+        //  LOGIC
+        // ==========================================
+
         const loginSection = document.getElementById('login-section');
-        const appSection = document.getElementById('app-section');
-        const loginForm = document.getElementById('login-form');
-        const userInput = document.getElementById('username-input');
-        const statusArea = document.getElementById('status-area');
-        const remainingEl = document.getElementById('remaining-count');
-
-        let userId = null; // Will be set after login (sanitized name/ID)
-        let userName = null; // Original name input by user
+        const loadingSection = document.getElementById('loading-section');
+        const guessSection = document.getElementById('guess-section');
+        const resultSection = document.getElementById('result-section');
+        const gameOverSection = document.getElementById('game-over-section');
         
-        // --- 1. HANDLE LOGIN ---
-        const savedUser = localStorage.getItem('picker_username');
-        if (savedUser) {
-            enterApp(savedUser);
-        }
+        const loadingText = document.getElementById('loading-text');
+        const spinner = document.getElementById('spinner');
+        const guessesLeftEl = document.getElementById('guesses-left');
+        const resultMsgEl = document.getElementById('result-message');
 
-        loginForm.addEventListener('submit', (e) => {
+        // Helper: Wait function for delays
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // 1. Handle Login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const val = userInput.value.trim();
-            if (val) enterApp(val);
+            const inputName = document.getElementById('username-input').value.trim();
+            const errorMsg = document.getElementById('login-error');
+
+            // Case-insensitive check
+            const isValid = ALLOWED_NAMES.some(name => name.toLowerCase() === inputName.toLowerCase());
+
+            if (isValid) {
+                // Initialize Audio context on first interaction
+                const audio = document.getElementById("bg-music");
+                if(audio) { audio.volume = 0.2; audio.play().catch(e => console.log("Audio autoplay blocked")); }
+
+                errorMsg.classList.add('hidden');
+                
+                // Start Transition Sequence
+                loginSection.classList.add('hidden');
+                loadingSection.classList.remove('hidden');
+
+                // Sequence: "hmm..." -> "searching..." -> "Found it!!"
+                loadingText.textContent = "hmm...";
+                await wait(1500);
+                
+                loadingText.textContent = "searching for your name in the database";
+                await wait(2000);
+
+                loadingText.textContent = "Found it!!";
+                await wait(1500);
+
+                // Move to Guess Screen
+                checkGameOver(); // Check if they are already blocked
+                loadingSection.classList.add('hidden');
+                guessSection.classList.remove('hidden');
+            } else {
+                errorMsg.classList.remove('hidden');
+                // Shake effect
+                document.querySelector('#login-section .card').animate([
+                    { transform: 'translateX(0)' },
+                    { transform: 'translateX(-10px)' },
+                    { transform: 'translateX(10px)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 300 });
+            }
         });
 
-        function enterApp(username) {
-            userName = username;
-            // sanitize username to be safe for database key/comparison (lowercase, remove non-alphanumeric)
-            userId = username.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        // 2. Handle Guess
+        document.getElementById('guess-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const guessInput = document.getElementById('guess-input');
+            if(!guessInput.value.trim()) return;
+
+            // Check Limits
+            let currentGuesses = parseInt(localStorage.getItem('santa_guesses') || '0');
             
-            // Save for reload convenience
-            localStorage.setItem('picker_username', username);
-
-            // Switch Screens
-            loginSection.classList.add('hidden');
-            appSection.classList.remove('hidden');
-
-            // Start Listening to Database
-            startDatabaseListener();
-        }
-
-        // --- 2. DATABASE LISTENER ---
-        function startDatabaseListener() {
-            onValue(namesRef, (snapshot) => {
-                const data = snapshot.val();
-
-                if (!data) {
-                    setupInitialData();
-                    return;
-                }
-                renderApp(data);
-            });
-        }
-
-        function setupInitialData() {
-            const initialData = {};
-            NAMES_TO_CREATE.forEach((name, index) => {
-                initialData[`id_${index}`] = { name: name, takenBy: "" };
-            });
-            set(namesRef, initialData);
-        }
-
-        // --- 3. RENDER UI ---
-        function renderApp(data) {
-            let mySelection = null;
-            let availableNamesMap = {}; // Use a map to store the actual name along with the key
-
-            // Scan data
-            Object.keys(data).forEach(key => {
-                const item = data[key];
-                if (item.takenBy === userId) {
-                    mySelection = item.name;
-                }
-                if (item.takenBy === "") {
-                    // Store available names: key -> actual name
-                    availableNamesMap[key] = item.name; 
-                }
-            });
-
-            const availableKeys = Object.keys(availableNamesMap);
-            remainingEl.textContent = availableKeys.length;
-
-            // Logic: Did user already pick?
-            if (mySelection) {
-                // SCENARIO A: ALREADY PICKED (LOCKED)
-                statusArea.innerHTML = `
-                    <p>Hello <b>${userName}!</b> You have been assigned:</p>
-                    <div class="assigned-name">${mySelection}</div>
-                    <div class="locked-msg">This selection is final. You cannot change it.</div>
-                `;
-            } else if (availableKeys.length > 0) {
-                // SCENARIO B: NEEDS TO PICK
-                statusArea.innerHTML = `
-                    <p>Hello <b>${userName}!</b> Ready to pick your <b>giftee</b>?</p>
-                    <button id="pick-btn" class="btn-success">Get Random Name</button>
-                `;
-                document.getElementById('pick-btn').onclick = () => pickRandomName(availableNamesMap);
-            } else {
-                // SCENARIO C: GAME OVER
-                statusArea.innerHTML = `<p style="color:red; font-weight:bold;">Sorry, all names have been taken!</p>`;
-            }
-        }
-
-        // --- 4. PICKING LOGIC ---
-        // Pass the map { key: name } to easily access the name for the conflict check
-        function pickRandomName(availableNamesMap) {
-            const btn = document.getElementById('pick-btn');
-            btn.disabled = true;
-            btn.textContent = "Assigning...";
-            
-            const availableKeys = Object.keys(availableNamesMap);
-
-            let randomKey = null;
-            let currentName = null;
-            let conflictFound = false;
-            let retries = 0;
-
-            // Loop to find a name that is NOT the user's name (case-insensitive)
-            do {
-                if (retries >= MAX_RETRIES) {
-                    // Safety break
-                    conflictFound = false; // Stop trying
-                    randomKey = null; // No assignment
-                    console.warn(`Stopped trying after ${MAX_RETRIES} attempts. User's name might be one of the only remaining options.`);
-                    break; 
-                }
-
-                const randomIndex = Math.floor(Math.random() * availableKeys.length);
-                const tempKey = availableKeys[randomIndex];
-                const tempName = availableNamesMap[tempKey];
-                
-                // Check if the random name is the same as the user's input name
-                if (tempName.toLowerCase() !== userName.toLowerCase()) {
-                    randomKey = tempKey;
-                    currentName = tempName;
-                    conflictFound = false;
-                } else {
-                    conflictFound = true;
-                    retries++;
-                    // Remove the conflicting name from the available pool for this attempt to avoid re-picking
-                    availableKeys.splice(randomIndex, 1); 
-                }
-            } while (conflictFound && availableKeys.length > 0);
-
-
-            if (!randomKey) {
-                // This means the user's name was one of the only/last available choices, 
-                // or retries maxed out (unlikely with >20 names)
-                statusArea.innerHTML = `<p style="color: red; font-weight: bold;">
-                    Could not find an available name that is not your input name (${userName}). Please try again.
-                </p>`;
-                btn.disabled = false;
-                btn.textContent = "Get Random Name";
+            if (currentGuesses >= MAX_GUESSES) {
+                showGameOver();
                 return;
             }
 
+            // Start Guess Loading Sequence
+            guessSection.classList.add('hidden');
+            loadingSection.classList.remove('hidden');
+            spinner.classList.add('hidden');
 
-            const itemRef = ref(db, `names/${randomKey}`);
+            // Sequence
+            loadingText.textContent = "hmm...";
+            await wait(1000);
 
-            // Transaction: Only Claim. No Releasing.
-            runTransaction(itemRef, (currentData) => {
-                // This function runs on the server with the latest data for itemRef
+            loadingText.textContent = "hMmMmm.....";
+            await wait(1500);
 
-                if (currentData === null) return currentData;
+            loadingText.textContent = "Database Loading...";
+            await wait(1500);
 
-                if (currentData.takenBy === "") {
-                    // Claim it!
-                    // **CRUCIAL SECONDARY CHECK**: In a highly concurrent scenario, another user 
-                    // could have claimed a name *we* passed over because it matched their name 
-                    // but the transaction still ensures we only claim it if it's currently free ("")
-                    
-                    // We also ensure the name in the database still doesn't match our name.
-                    // This is a safety measure, though the client-side logic should handle it.
-                    if (currentData.name.toLowerCase() === userName.toLowerCase()) {
-                        console.log("Database conflict: Name matches user name on transaction retry. Aborting.");
-                        return; // Abort transaction if it's the conflicting name
-                    }
-                    
-                    currentData.takenBy = userId;
-                    return currentData;
-                } else {
-                    // Someone else took it
-                    return; 
-                }
-            }).then(result => {
-                if (!result.committed) {
-                    // If the transaction aborted because someone else claimed it, or 
-                    // because our secondary conflict check failed (highly unlikely)
-                    alert("Someone grabbed that name milliseconds before you! Trying again...");
-                    // Refresh the state
-                    btn.disabled = false;
-                    btn.textContent = "Get Random Name";
-                }
-                // onValue listener handles the successful commit update
-            }).catch(console.error);
-        }
-    </script>
+            loadingText.textContent = "Finding your Santa....";
+            await wait(2000);
 
-    <script>
-const confettiColors = ["#e74c3c", "#2ecc71", "#f1c40f", "#ffffff"];
+            loadingText.textContent = "Comparing your guess with it...";
+            spinner.classList.remove('hidden'); // Show buffer emoji
+            await wait(2500);
 
-function launchConfetti() {
-    for (let i = 0; i < 120; i++) {
-        const confetti = document.createElement("div");
-        confetti.style.position = "fixed";
-        confetti.style.top = "-10px";
-        confetti.style.left = Math.random() * 100 + "vw";
-        confetti.style.width = "8px";
-        confetti.style.height = "8px";
-        confetti.style.backgroundColor =
-            confettiColors[Math.floor(Math.random() * confettiColors.length)];
-        confetti.style.opacity = Math.random();
-        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-        confetti.style.zIndex = 9999;
-        confetti.style.borderRadius = "2px";
-        confetti.style.transition = "transform 3s linear, top 3s linear";
+            // Increment Guess Count AFTER sequence
+            currentGuesses++;
+            localStorage.setItem('santa_guesses', currentGuesses);
+            updateGuessDisplay();
 
-        document.body.appendChild(confetti);
+            spinner.classList.add('hidden');
 
-        requestAnimationFrame(() => {
-            confetti.style.top = "110vh";
-            confetti.style.transform += " translateY(110vh)";
+            if (currentGuesses > MAX_GUESSES) {
+                 showGameOver();
+            } else {
+                // Show Random Wrong Message
+                showResult();
+            }
         });
 
-        setTimeout(() => confetti.remove(), 3000);
-    }
-}
+        function showResult() {
+            const randomMsg = WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)];
+            resultMsgEl.textContent = randomMsg;
 
-/* Watch for assignment appearing */
-const observer = new MutationObserver(() => {
-    if (document.querySelector(".assigned-name")) {
-        launchConfetti();
-        observer.disconnect();
-    }
-});
+            loadingSection.classList.add('hidden');
+            resultSection.classList.remove('hidden');
+        }
 
-observer.observe(document.body, { childList: true, subtree: true });
-</script>
- <script>
-document.addEventListener("click", () => {
-    const audio = document.querySelector("audio");
-    if (audio && audio.paused) {
-        audio.volume = 0.2;
-        audio.play().catch(() => {});
-    }
-}, { once: true });
-</script> 
+        // Called by "Try Again" button
+        window.resetGuess = function() {
+            document.getElementById('guess-input').value = ""; // Clear input
+            
+            // Check if they died just now
+            let currentGuesses = parseInt(localStorage.getItem('santa_guesses') || '0');
+            if (currentGuesses >= MAX_GUESSES) {
+                showGameOver();
+            } else {
+                resultSection.classList.add('hidden');
+                guessSection.classList.remove('hidden');
+            }
+        }
 
+        function showGameOver() {
+            loginSection.classList.add('hidden');
+            loadingSection.classList.add('hidden');
+            guessSection.classList.add('hidden');
+            resultSection.classList.add('hidden');
+            gameOverSection.classList.remove('hidden');
+        }
 
-    
+        function checkGameOver() {
+            let currentGuesses = parseInt(localStorage.getItem('santa_guesses') || '0');
+            updateGuessDisplay();
+            if (currentGuesses >= MAX_GUESSES) {
+                showGameOver();
+            }
+        }
+
+        function updateGuessDisplay() {
+            let currentGuesses = parseInt(localStorage.getItem('santa_guesses') || '0');
+            let left = MAX_GUESSES - currentGuesses;
+            if(left < 0) left = 0;
+            guessesLeftEl.textContent = left;
+        }
+
+        // Initialize check on load (in case they refresh on the game over screen)
+        // But we allow them to see the login screen first
+    </script>
 </body>
 </html>
