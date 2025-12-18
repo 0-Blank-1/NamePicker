@@ -226,16 +226,16 @@
                 // === LOGIN ANIMATION SEQUENCE ===
                 
                 // "hmm..." (Slow typing: 200ms per letter)
-                await typeWriter(loadingText, "hmm...", 200); 
-                await wait(1500); // Read time
+                await typeWriter(loadingText, "hmm...", 150); 
+                await wait(1050); // Read time
                 
                 // "searching..." (Fast typing: 50ms per letter)
                 await typeWriter(loadingText, "searching for your name in the database...", 50);
-                await wait(1500); // Read time
+                await wait(1050); // Read time
 
                 // "Found it!!" (Medium typing)
-                await typeWriter(loadingText, "Found it!!", 100);
-                await wait(1500); // Read time
+                await typeWriter(loadingText, "Found it!!", 70);
+                await wait(1050); // Read time
 
                 // Finish
                 checkGameOver();
@@ -273,24 +273,24 @@
             // === GUESS ANIMATION SEQUENCE ===
 
             // 1. "hmm..."
-            await typeWriter(loadingText, "hmm...", 200);
+            await typeWriter(loadingText, "hmm.....", 150);
             await wait(1500);
 
             // 2. "hMmMmm....." (Very Slow typing for effect)
-            await typeWriter(loadingText, "hMmMmm.....", 250);
+            await typeWriter(loadingText, "hMmMMm.....", 180);
             await wait(1500);
 
             // 3. "Database Loading..." (Fast)
-            await typeWriter(loadingText, "Database Loading...", 50);
+            await typeWriter(loadingText, "Database Loading...", 40);
             await wait(1500);
 
             // 4. "Finding your Santa...." (Medium)
-            await typeWriter(loadingText, "Finding your Santa....", 100);
+            await typeWriter(loadingText, "Finding your Santa....", 80);
             await wait(1500);
 
             // 5. "Comparing..." + Buffer Emoji
             spinner.classList.remove('hidden'); 
-            await typeWriter(loadingText, "Comparing your guess...", 80);
+            await typeWriter(loadingText, "Comparing your guess...", 60);
             await wait(2500); // Longer wait for the "buffer" feel
 
             // Update Logic
