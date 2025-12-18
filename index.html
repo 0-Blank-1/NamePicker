@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-    <link rel="icon" type="image/png" href="favicon.png">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secret Santa Guesser</title>
     <style>
         /* ================================
-           CORE STYLES (From Original)
+           CORE STYLES
         ================================ */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
         
@@ -36,7 +33,7 @@
         .btn-success { background-color: #28a745; color: white; }
 
         /* Message Text Styles */
-        .status-msg { font-size: 1.5rem; font-weight: bold; color: #fff; min-height: 60px; }
+        .status-msg { font-size: 1.5rem; font-weight: bold; color: #fff; min-height: 60px; line-height: 1.4; }
         .error-text { color: #ff6b6b; font-weight: bold; margin-top: 10px; }
 
         /* ================================
@@ -91,6 +88,11 @@
             0%, 100% { transform: translateX(-50%) rotate(-10deg); }
             50% { transform: translateX(-50%) rotate(5deg); }
         }
+        
+        /* Blinking cursor for typewriter effect */
+        .cursor { display: inline-block; width: 2px; height: 1.2em; background-color: white; animation: blink 1s infinite; vertical-align: bottom;}
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
     </style>
 </head>
 <body>
@@ -114,7 +116,9 @@
 
     <div id="loading-section" class="container hidden">
         <div class="card">
-            <h1 id="loading-text" class="status-msg">hmm...</h1>
+            <div class="status-msg">
+                <span id="loading-text"></span><span class="cursor"></span>
+            </div>
             <div id="spinner" class="hidden" style="font-size: 3rem; margin-top:20px;">🤔</div>
         </div>
     </div>
@@ -122,7 +126,7 @@
     <div id="guess-section" class="container hidden">
         <div class="card">
             <h1>Who is your Santa?</h1>
-            <p>The database found you! Now, guess who picked you.</p>
+            <p>Can you guess you Secret Santa?</p>
             <form id="guess-form">
                 <input type="text" id="guess-input" placeholder="Guess a name..." required autocomplete="off">
                 <br>
@@ -150,10 +154,9 @@
 
     <script>
         // ==========================================
-        //  CONFIGURATION (EDIT HERE)
+        //  CONFIGURATION
         // ==========================================
         
-        // The names allowed to log in
         const ALLOWED_NAMES = [
             "Aakriti", "Ashruk", "Arushi", "Allan", "Ayurda", 
             "Awesome", "Bidhan", "Rainaa", "Rejina", "Rythm",
@@ -161,17 +164,15 @@
             "Suraj", "Rahul", "Rohan", "Soham", "Shreejal", "Tanuska"
         ];
 
-        // The "Wrong" messages displayed after the fake loading
         const WRONG_MESSAGES = [
             "Opps! Wrong Guess",
             "hAhAAA! you entered wrong name",
             "Oh no!, sadly you could not guess your Santa",
             "Nice try, but nope!🥱",
-            "Santa is gonna be sad😿",
+            "Santa Sad that you couldn't choose him😿",
             "Database says: INCORRECT ❌"
         ];
 
-        // Max guesses per device
         const MAX_GUESSES = 4;
 
         // ==========================================
@@ -189,8 +190,19 @@
         const guessesLeftEl = document.getElementById('guesses-left');
         const resultMsgEl = document.getElementById('result-message');
 
-        // Helper: Wait function for delays
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // TYPEWRITER FUNCTION
+        // element: the HTML element to type into
+        // text: the string to type
+        // speed: ms per character (higher = slower)
+        async function typeWriter(element, text, speed = 100) {
+            element.textContent = ""; // Clear existing text
+            for (let i = 0; i < text.length; i++) {
+                element.textContent += text.charAt(i);
+                await wait(speed); 
+            }
+        }
 
         // 1. Handle Login
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -198,37 +210,39 @@
             const inputName = document.getElementById('username-input').value.trim();
             const errorMsg = document.getElementById('login-error');
 
-            // Case-insensitive check
             const isValid = ALLOWED_NAMES.some(name => name.toLowerCase() === inputName.toLowerCase());
 
             if (isValid) {
-                // Initialize Audio context on first interaction
+                // Play Audio
                 const audio = document.getElementById("bg-music");
-                if(audio) { audio.volume = 0.2; audio.play().catch(e => console.log("Audio autoplay blocked")); }
+                if(audio) { audio.volume = 0.1; audio.play().catch(e => console.log("Audio autoplay blocked")); }
 
                 errorMsg.classList.add('hidden');
                 
-                // Start Transition Sequence
+                // Switch to Loading Screen
                 loginSection.classList.add('hidden');
                 loadingSection.classList.remove('hidden');
 
-                // Sequence: "hmm..." -> "searching..." -> "Found it!!"
-                loadingText.textContent = "hmm...";
-                await wait(1500);
+                // === LOGIN ANIMATION SEQUENCE ===
                 
-                loadingText.textContent = "searching for your name in the database";
-                await wait(2000);
+                // "hmm..." (Slow typing: 200ms per letter)
+                await typeWriter(loadingText, "hmm...", 200); 
+                await wait(1500); // Read time
+                
+                // "searching..." (Fast typing: 50ms per letter)
+                await typeWriter(loadingText, "searching for your name in the database...", 50);
+                await wait(1500); // Read time
 
-                loadingText.textContent = "Found it!!";
-                await wait(1500);
+                // "Found it!!" (Medium typing)
+                await typeWriter(loadingText, "Found it!!", 100);
+                await wait(1500); // Read time
 
-                // Move to Guess Screen
-                checkGameOver(); // Check if they are already blocked
+                // Finish
+                checkGameOver();
                 loadingSection.classList.add('hidden');
                 guessSection.classList.remove('hidden');
             } else {
                 errorMsg.classList.remove('hidden');
-                // Shake effect
                 document.querySelector('#login-section .card').animate([
                     { transform: 'translateX(0)' },
                     { transform: 'translateX(-10px)' },
@@ -244,7 +258,6 @@
             const guessInput = document.getElementById('guess-input');
             if(!guessInput.value.trim()) return;
 
-            // Check Limits
             let currentGuesses = parseInt(localStorage.getItem('santa_guesses') || '0');
             
             if (currentGuesses >= MAX_GUESSES) {
@@ -252,29 +265,35 @@
                 return;
             }
 
-            // Start Guess Loading Sequence
+            // Switch to Loading Screen
             guessSection.classList.add('hidden');
             loadingSection.classList.remove('hidden');
             spinner.classList.add('hidden');
 
-            // Sequence
-            loadingText.textContent = "hmm...";
-            await wait(1000);
+            // === GUESS ANIMATION SEQUENCE ===
 
-            loadingText.textContent = "hMmMmm.....";
+            // 1. "hmm..."
+            await typeWriter(loadingText, "hmm...", 200);
             await wait(1500);
 
-            loadingText.textContent = "Database Loading...";
+            // 2. "hMmMmm....." (Very Slow typing for effect)
+            await typeWriter(loadingText, "hMmMmm.....", 250);
             await wait(1500);
 
-            loadingText.textContent = "Finding your Santa....";
-            await wait(2000);
+            // 3. "Database Loading..." (Fast)
+            await typeWriter(loadingText, "Database Loading...", 50);
+            await wait(1500);
 
-            loadingText.textContent = "Comparing your guess with it...";
-            spinner.classList.remove('hidden'); // Show buffer emoji
-            await wait(2500);
+            // 4. "Finding your Santa...." (Medium)
+            await typeWriter(loadingText, "Finding your Santa....", 100);
+            await wait(1500);
 
-            // Increment Guess Count AFTER sequence
+            // 5. "Comparing..." + Buffer Emoji
+            spinner.classList.remove('hidden'); 
+            await typeWriter(loadingText, "Comparing your guess...", 80);
+            await wait(2500); // Longer wait for the "buffer" feel
+
+            // Update Logic
             currentGuesses++;
             localStorage.setItem('santa_guesses', currentGuesses);
             updateGuessDisplay();
@@ -284,7 +303,6 @@
             if (currentGuesses > MAX_GUESSES) {
                  showGameOver();
             } else {
-                // Show Random Wrong Message
                 showResult();
             }
         });
@@ -297,11 +315,9 @@
             resultSection.classList.remove('hidden');
         }
 
-        // Called by "Try Again" button
         window.resetGuess = function() {
-            document.getElementById('guess-input').value = ""; // Clear input
+            document.getElementById('guess-input').value = ""; 
             
-            // Check if they died just now
             let currentGuesses = parseInt(localStorage.getItem('santa_guesses') || '0');
             if (currentGuesses >= MAX_GUESSES) {
                 showGameOver();
@@ -334,8 +350,6 @@
             guessesLeftEl.textContent = left;
         }
 
-        // Initialize check on load (in case they refresh on the game over screen)
-        // But we allow them to see the login screen first
     </script>
 </body>
 </html>
