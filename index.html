@@ -274,23 +274,23 @@
 
             // 1. "hmm..."
             await typeWriter(loadingText, "hmm.....", 150);
-            await wait(1500);
+            await wait(750);
 
             // 2. "hMmMmm....." (Very Slow typing for effect)
             await typeWriter(loadingText, "hMmMMm.....", 180);
-            await wait(1500);
+            await wait(750);
 
             // 3. "Database Loading..." (Fast)
             await typeWriter(loadingText, "Database Loading...", 40);
-            await wait(1500);
+            await wait(1100);
 
             // 4. "Finding your Santa...." (Medium)
-            await typeWriter(loadingText, "Finding your Santa....", 80);
-            await wait(1500);
+            await typeWriter(loadingText, "Finding your Santa....", 50);
+            await wait(1100);
 
             // 5. "Comparing..." + Buffer Emoji
             spinner.classList.remove('hidden'); 
-            await typeWriter(loadingText, "Comparing your guess...", 60);
+            await typeWriter(loadingText, "Comparing your guess...", 40);
             await wait(2500); // Longer wait for the "buffer" feel
 
             // Update Logic
